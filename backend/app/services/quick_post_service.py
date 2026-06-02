@@ -113,6 +113,35 @@ def deleteQuickPost(userId: int, quickPostId: int) -> bool:
         return cursor.rowcount > 0
 
 
+def updateQuickPost(userId: int, quickPostId: int, content: str, visibleType: str) -> dict[str, str | int | bool] | None:
+    with getDatabaseConnection() as connection:
+        row = connection.execute(
+            "SELECT id, user_id FROM quick_posts WHERE id = ?",
+            (quickPostId,),
+        ).fetchone()
+
+    if row is None or row["user_id"] != userId:
+        return None
+
+    with getDatabaseConnection() as connection:
+        connection.execute(
+            "UPDATE quick_posts SET content = ?, visible_type = ?, update_time = CURRENT_TIMESTAMP WHERE id = ?",
+            (content, visibleType, quickPostId),
+        )
+        connection.commit()
+        row = connection.execute(
+            """
+            SELECT quick_posts.*, users.nickname AS author_nickname
+            FROM quick_posts
+            JOIN users ON users.id = quick_posts.user_id
+            WHERE quick_posts.id = ?
+            """,
+            (quickPostId,),
+        ).fetchone()
+
+    return formatQuickPost(row, userId)
+
+
 def listAdminQuickPosts() -> list[dict[str, str | int | bool]]:
     with getDatabaseConnection() as connection:
         rows = connection.execute(

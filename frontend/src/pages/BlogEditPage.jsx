@@ -15,7 +15,9 @@ import httpClient from '../api/http-client';
 function BlogEditPage() {
   const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
-  const draftId = searchParams.get('draftId');
+  const articleId = searchParams.get('articleId');
+  const draftId = articleId ? null : searchParams.get('draftId');
+  const isPublishedMode = Boolean(articleId);
   const plugins = useMemo(() => [gfm(), math(), highlight()], []);
   const [formData, setFormData] = useState({
     title: '',
@@ -29,12 +31,50 @@ function BlogEditPage() {
   const [newCategoryName, setNewCategoryName] = useState('');
   const [currentDraftId, setCurrentDraftId] = useState(draftId);
   const [message, setMessage] = useState('');
-  const [isLoading, setIsLoading] = useState(Boolean(draftId));
+  const [isLoading, setIsLoading] = useState(Boolean(draftId || articleId));
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [aiLoading, setAiLoading] = useState(false);
   const [aiModel, setAiModel] = useState(null);
 
   useEffect(() => {
+    if (isPublishedMode) {
+      let isMounted = true;
+
+      async function fetchArticle() {
+        try {
+          const response = await httpClient.get(`/articles/${articleId}`);
+          if (isMounted) {
+            setFormData({
+              title: response.data.title,
+              summary: response.data.summary || '',
+              content: response.data.content,
+              category_id: response.data.category_id ? String(response.data.category_id) : '',
+              visible_type: response.data.visible_type || 'self',
+              tags: response.data.tags.join(', '),
+            });
+          }
+        } catch {
+          if (isMounted) {
+            setMessage('文章加载失败');
+          }
+        } finally {
+          if (isMounted) {
+            setIsLoading(false);
+          }
+        }
+      }
+
+      fetchArticle();
+
+      return () => {
+        isMounted = false;
+      };
+    }
+  }, [articleId, isPublishedMode]);
+
+  useEffect(() => {
+    if (isPublishedMode) return;
+
     let isMounted = true;
 
     async function fetchDraft() {
@@ -205,6 +245,21 @@ function BlogEditPage() {
     }
   }
 
+  async function handleSaveArticle() {
+    setMessage('');
+    setIsSubmitting(true);
+
+    try {
+      const payload = getPayload();
+      await httpClient.put(`/articles/${articleId}`, payload);
+      setMessage('保存成功');
+    } catch {
+      setMessage('保存失败，请检查标题和正文');
+    } finally {
+      setIsSubmitting(false);
+    }
+  }
+
   async function handlePublish() {
     setMessage('');
     setIsSubmitting(true);
@@ -236,7 +291,7 @@ function BlogEditPage() {
     <section className="page-section">
       <div className="page-heading">
         <h1>文章编辑器</h1>
-        <p>使用 Markdown 写作，实时预览，并保存到云端草稿。</p>
+        <p>{isPublishedMode ? '正在编辑已发布文章。' : '使用 Markdown 写作，实时预览，并保存到云端草稿。'}</p>
       </div>
 
       <div className="content-panel editor-shell">
@@ -320,12 +375,20 @@ function BlogEditPage() {
           />
         </div>
         <div className="editor-actions">
-          <button type="button" onClick={handleSaveDraft} disabled={isSubmitting}>
-            保存草稿
-          </button>
-          <button className="secondary-button" type="button" onClick={handlePublish} disabled={isSubmitting}>
-            发布
-          </button>
+          {isPublishedMode ? (
+            <button type="button" onClick={handleSaveArticle} disabled={isSubmitting}>
+              保存修改
+            </button>
+          ) : (
+            <>
+              <button type="button" onClick={handleSaveDraft} disabled={isSubmitting}>
+                保存草稿
+              </button>
+              <button className="secondary-button" type="button" onClick={handlePublish} disabled={isSubmitting}>
+                发布
+              </button>
+            </>
+          )}
           {message && <p className="form-message">{message}</p>}
         </div>
       </div>

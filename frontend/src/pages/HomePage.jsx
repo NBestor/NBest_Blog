@@ -150,6 +150,9 @@ function HomePage() {
   const [calendarMessage, setCalendarMessage] = useState('');
   const [isTodoOpen, setIsTodoOpen] = useState(true);
   const [isLoading, setIsLoading] = useState(true);
+  const [editingPostId, setEditingPostId] = useState(null);
+  const [editContent, setEditContent] = useState('');
+  const [editVisibleType, setEditVisibleType] = useState('public');
 
   const upcomingTodos = useMemo(() => todos.filter((todo) => !todo.is_done).slice(0, 5), [todos]);
 
@@ -238,6 +241,38 @@ function HomePage() {
       await loadHome();
     } catch {
       setMessage('点赞操作失败');
+    }
+  }
+
+  function handleStartEdit(event, post) {
+    event.stopPropagation();
+    setEditingPostId(post.id);
+    setEditContent(post.content);
+    setEditVisibleType(post.visible_type);
+  }
+
+  function handleCancelEdit() {
+    setEditingPostId(null);
+    setEditContent('');
+  }
+
+  async function handleSaveEdit(event, postId) {
+    event.stopPropagation();
+    if (!editContent.trim()) {
+      setMessage('内容不能为空');
+      return;
+    }
+
+    try {
+      await httpClient.put(`/quick-posts/${postId}`, {
+        content: editContent.trim(),
+        visible_type: editVisibleType,
+      });
+      setEditingPostId(null);
+      setEditContent('');
+      await loadHome();
+    } catch {
+      setMessage('快写编辑失败');
     }
   }
 
@@ -366,37 +401,70 @@ function HomePage() {
               </div>
             ) : null}
             <div className="quick-post-list compact">
-              {quickPosts.map((post) => (
-                <article
-                  className="content-panel quick-post-card clickable-card"
-                  key={post.id}
-                  onClick={() => navigate(`/quick-posts/${post.id}`)}
-                >
-                  <div className="article-meta">
-                    <span>{post.author_nickname}</span>
-                    <span>{visibleLabels[post.visible_type]}</span>
-                  </div>
-                  <p>{post.content}</p>
-                  <div className="article-meta">
-                    <span>{post.like_count} 赞</span>
-                    <span>{post.comment_count} 评论</span>
-                    <span>{post.create_time}</span>
-                  </div>
-                  <div className="editor-actions">
-                    <LikeButton
-                      count={post.like_count}
-                      disabled={!isAuthenticated}
-                      isLiked={post.is_liked}
-                      onClick={(event) => handleToggleQuickPostLike(event, post)}
+              {quickPosts.map((post) =>
+                editingPostId === post.id ? (
+                  <article className="content-panel quick-post-card" key={post.id}>
+                    <textarea
+                      maxLength={1000}
+                      onChange={(event) => setEditContent(event.target.value)}
+                      rows={4}
+                      value={editContent}
                     />
-                    {post.can_manage ? (
-                      <button className="secondary-button" onClick={(event) => handleDeleteQuickPost(event, post)} type="button">
-                        删除
+                    <div className="editor-actions">
+                      <select onChange={(event) => setEditVisibleType(event.target.value)} value={editVisibleType}>
+                        <option value="public">公开</option>
+                        <option value="friend">好友可见</option>
+                        <option value="self">仅自己可见</option>
+                      </select>
+                      <button onClick={(event) => handleSaveEdit(event, post.id)} type="button">
+                        保存
                       </button>
-                    ) : null}
-                  </div>
-                </article>
-              ))}
+                      <button className="secondary-button" onClick={handleCancelEdit} type="button">
+                        取消
+                      </button>
+                    </div>
+                  </article>
+                ) : (
+                  <article
+                    className="content-panel quick-post-card clickable-card"
+                    key={post.id}
+                    onClick={() => navigate(`/quick-posts/${post.id}`)}
+                  >
+                    <div className="article-meta">
+                      <span>{post.author_nickname}</span>
+                      <span>{visibleLabels[post.visible_type]}</span>
+                    </div>
+                    <p>{post.content}</p>
+                    <div className="article-meta">
+                      <span>{post.like_count} 赞</span>
+                      <span>{post.comment_count} 评论</span>
+                      <span>{post.create_time}</span>
+                    </div>
+                    <div className="editor-actions">
+                      <LikeButton
+                        count={post.like_count}
+                        disabled={!isAuthenticated}
+                        isLiked={post.is_liked}
+                        onClick={(event) => handleToggleQuickPostLike(event, post)}
+                      />
+                      {post.can_manage ? (
+                        <>
+                          <button
+                            className="secondary-button"
+                            onClick={(event) => handleStartEdit(event, post)}
+                            type="button"
+                          >
+                            ✏️ 编辑
+                          </button>
+                          <button className="secondary-button" onClick={(event) => handleDeleteQuickPost(event, post)} type="button">
+                            删除
+                          </button>
+                        </>
+                      ) : null}
+                    </div>
+                  </article>
+                )
+              )}
             </div>
           </section>
         </aside>

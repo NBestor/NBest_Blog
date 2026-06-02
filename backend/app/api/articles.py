@@ -20,6 +20,7 @@ from app.services.article_service import (
     listVisibleArticles,
     publishDraft,
     updateDraft,
+    updatePublishedArticle,
 )
 from app.services.comment_service import createComment, getTargetComment, listComments
 from app.services.interaction_service import collectArticle, likeArticle, likeTarget, uncollectArticle, unlikeArticle, unlikeTarget
@@ -163,6 +164,29 @@ def uploadArticleImage(
         connection.commit()
 
     return {"url": imageUrl}
+
+
+@router.put("/{article_id}", response_model=DraftResponse)
+def updatePublishedArticleEndpoint(
+    article_id: int,
+    request: DraftRequest,
+    currentUser: dict[str, str | int | None] = Depends(getCurrentUser),
+) -> DraftResponse:
+    userId = int(currentUser["id"])
+    article = updatePublishedArticle(
+        userId,
+        article_id,
+        request.title,
+        request.summary,
+        request.content,
+        request.category_id,
+        request.visible_type,
+        request.tags,
+    )
+    if article is None:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Article not found or not authorized")
+
+    return DraftResponse(**article)
 
 
 @router.get("/{article_id}", response_model=ArticleDetailResponse)

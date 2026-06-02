@@ -1,4 +1,3 @@
-from sqlite3 import Row
 import re
 
 from app.db.database import getDatabaseConnection
@@ -221,6 +220,56 @@ def publishDraft(userId: int, draftId: int) -> dict[str, str | int | bool | None
             WHERE articles.id = ? AND articles.user_id = ?
             """,
             (draftId, userId),
+        ).fetchone()
+
+    return formatArticle(row) if row else None
+
+
+def updatePublishedArticle(
+    userId: int,
+    articleId: int,
+    title: str,
+    summary: str | None,
+    content: str,
+    categoryId: int | None,
+    visibleType: str,
+    tags: list[str],
+) -> dict[str, str | int | bool | None] | None:
+    if not canUseCategory(userId, categoryId):
+        return None
+
+    with getDatabaseConnection() as connection:
+        row = connection.execute(
+            "SELECT id, user_id FROM articles WHERE id = ? AND is_draft = 0",
+            (articleId,),
+        ).fetchone()
+
+    if row is None or row["user_id"] != userId:
+        return None
+
+    with getDatabaseConnection() as connection:
+        connection.execute(
+            """
+            UPDATE articles
+            SET title = ?, summary = ?, content = ?, category_id = ?,
+                visible_type = ?, update_time = CURRENT_TIMESTAMP
+            WHERE id = ? AND user_id = ? AND is_draft = 0
+            """,
+            (title, summary, content, categoryId, visibleType, articleId, userId),
+        )
+        connection.commit()
+
+    syncArticleTags(userId, articleId, tags)
+
+    with getDatabaseConnection() as connection:
+        row = connection.execute(
+            """
+            SELECT articles.*, article_categories.name AS category_name
+            FROM articles
+            LEFT JOIN article_categories ON article_categories.id = articles.category_id
+            WHERE articles.id = ?
+            """,
+            (articleId,),
         ).fetchone()
 
     return formatArticle(row) if row else None

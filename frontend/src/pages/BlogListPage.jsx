@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 
 import httpClient from '../api/http-client';
+import { useAuth } from '../contexts/use-auth';
 
 const visibleTypeLabels = {
   public: '公开',
@@ -11,9 +12,11 @@ const visibleTypeLabels = {
 
 function BlogListPage() {
   const navigate = useNavigate();
+  const { user } = useAuth();
   const [articles, setArticles] = useState([]);
   const [message, setMessage] = useState('');
   const [isLoading, setIsLoading] = useState(true);
+  const currentUserId = user?.id;
 
   useEffect(() => {
     let isMounted = true;
@@ -80,7 +83,21 @@ function BlogListPage() {
                 ))}
               </div>
             </div>
-            <span className="article-time">{article.update_time}</span>
+            <div className="article-card-actions">
+              <span className="article-time">{article.update_time}</span>
+              {currentUserId && article.user_id === currentUserId && (
+                <button
+                  className="secondary-button"
+                  type="button"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    navigate(`/blog/edit?articleId=${article.id}`);
+                  }}
+                >
+                  ✏️ 编辑
+                </button>
+              )}
+            </div>
           </article>
         ))}
       </div>

@@ -6,7 +6,7 @@ from app.schemas.interaction import InteractionResponse
 from app.schemas.quick_post import QuickPostListResponse, QuickPostRequest, QuickPostResponse
 from app.services.comment_service import createTargetComment, getTargetComment, listTargetComments
 from app.services.interaction_service import likeTarget, unlikeTarget
-from app.services.quick_post_service import createQuickPost, deleteQuickPost, getVisibleQuickPost, listVisibleQuickPosts
+from app.services.quick_post_service import createQuickPost, deleteQuickPost, getVisibleQuickPost, listVisibleQuickPosts, updateQuickPost
 
 
 router = APIRouter(prefix="/quick-posts", tags=["quick-posts"])
@@ -49,6 +49,19 @@ def deleteQuickPostEndpoint(
     if not isDeleted:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Quick post not found")
     return {"status": "ok"}
+
+
+@router.put("/{quick_post_id}", response_model=QuickPostResponse)
+def updateQuickPostEndpoint(
+    quick_post_id: int,
+    request: QuickPostRequest,
+    currentUser: dict[str, str | int | None] = Depends(getCurrentUser),
+) -> QuickPostResponse:
+    userId = int(currentUser["id"])
+    result = updateQuickPost(userId, quick_post_id, request.content, request.visible_type or "public")
+    if result is None:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Quick post not found or not authorized")
+    return QuickPostResponse(**result)
 
 
 @router.get("/{quick_post_id}/comments", response_model=CommentListResponse)

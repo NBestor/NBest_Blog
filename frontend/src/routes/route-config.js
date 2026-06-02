@@ -1,6 +1,6 @@
 export const routes = [
   { path: '/', label: '首页', title: '首页', description: '快写发布、动态流与全局提醒弹窗入口。', visibility: 'public' },
-  { path: '/blog', label: '博客', title: '博客文章', description: '公开文章列表页面框架。', visibility: 'public', showInNav: false },
+  { path: '/blog', label: '博客', title: '博客文章', description: '公开文章列表页面框架。', visibility: 'public' },
   { path: '/blog/edit', label: '写文章', title: '文章编辑器', description: 'Markdown 编辑器页面框架。', visibility: 'auth' },
   { path: '/blog/draft', label: '草稿', title: '草稿箱', description: '云端草稿管理页面框架。', visibility: 'auth' },
   {

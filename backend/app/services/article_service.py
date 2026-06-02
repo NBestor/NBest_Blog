@@ -7,7 +7,7 @@ from app.services.article_tag_service import getArticleTags, syncArticleTags
 from app.services.interaction_service import getArticleStats
 
 
-SUMMARY_LIMIT = 140
+SUMMARY_LIMIT = 300
 
 
 def buildArticleSummary(summary: str | None, content: str) -> str | None:

@@ -31,6 +31,8 @@ function BlogEditPage() {
   const [message, setMessage] = useState('');
   const [isLoading, setIsLoading] = useState(Boolean(draftId));
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [aiLoading, setAiLoading] = useState(false);
+  const [aiModel, setAiModel] = useState(null);
 
   useEffect(() => {
     let isMounted = true;
@@ -112,6 +114,29 @@ function BlogEditPage() {
         .map((tag) => tag.trim())
         .filter(Boolean),
     };
+  }
+
+  async function handleAIGenerateSummary() {
+    const content = formData.content.trim();
+    if (!content) {
+      setMessage('请先编写文章内容');
+      return;
+    }
+
+    setMessage('');
+    setAiLoading(true);
+    setAiModel(null);
+
+    try {
+      const response = await httpClient.post('/ai/summary', { content });
+      setFormData((currentData) => ({ ...currentData, summary: response.data.summary }));
+      setAiModel(response.data.model);
+    } catch (error) {
+      const detail = error.response?.data?.detail || 'AI 生成失败，请稍后重试';
+      setMessage(detail);
+    } finally {
+      setAiLoading(false);
+    }
   }
 
   async function handleCreateCategory() {
@@ -225,12 +250,28 @@ function BlogEditPage() {
             name="summary"
             value={formData.summary}
             onChange={handleChange}
-            maxLength={140}
+            maxLength={300}
             rows={3}
             placeholder="不写简介时，会自动取正文开头作为词条简介"
           />
-          <span className="field-hint">{formData.summary.length}/140</span>
+          <span className="field-hint">{formData.summary.length}/300</span>
         </label>
+        <div className="ai-summary-row">
+          <button
+            className="secondary-button"
+            type="button"
+            onClick={handleAIGenerateSummary}
+            disabled={aiLoading}
+          >
+            {aiLoading ? '🤖 AI 生成中...' : '🤖 AI 生成'}
+          </button>
+          {!formData.summary.trim() && !aiLoading && !aiModel && (
+            <span className="ai-hint">用 AI 帮你生成？</span>
+          )}
+          {aiModel && (
+            <span className="ai-model-label">由 {aiModel} 生成</span>
+          )}
+        </div>
         <div className="article-meta-grid">
           <label>
             分类

@@ -3,6 +3,7 @@ from fastapi import APIRouter
 from app.api.article_categories import router as articleCategoriesRouter
 from app.api.article_tags import router as articleTagsRouter
 from app.api.admin import router as adminRouter
+from app.api.ai import router as aiRouter
 from app.api.articles import router as articlesRouter
 from app.api.auth import router as authRouter
 from app.api.calendar_events import router as calendarEventsRouter
@@ -18,6 +19,7 @@ from app.api.users import router as usersRouter
 
 apiRouter = APIRouter()
 apiRouter.include_router(adminRouter)
+apiRouter.include_router(aiRouter)
 apiRouter.include_router(articleCategoriesRouter)
 apiRouter.include_router(articleTagsRouter)
 apiRouter.include_router(articlesRouter)

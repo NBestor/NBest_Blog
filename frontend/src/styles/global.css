@@ -2232,3 +2232,29 @@ select:focus-visible {
     margin-top: 8px;
   }
 }
+
+/* AI summary generation row */
+.ai-summary-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-top: -8px;
+  margin-bottom: 4px;
+}
+
+.ai-summary-row .secondary-button {
+  min-height: 32px;
+  padding: 0 12px;
+  font-size: 13px;
+}
+
+.ai-hint {
+  color: #999;
+  font-size: 13px;
+}
+
+.ai-model-label {
+  color: #888;
+  font-size: 12px;
+  font-style: italic;
+}

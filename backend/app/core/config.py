@@ -16,6 +16,9 @@ class Settings(BaseSettings):
     jwt_expire_minutes: int = 60 * 24 * 7
     static_dir: Path = BASE_DIR / "static"
     upload_dir: Path = BASE_DIR / "static" / "uploads"
+    ai_api_key: str = ""
+    ai_base_url: str = "https://api.deepseek.com"
+    ai_model: str = "deepseek-chat"
 
     model_config = SettingsConfigDict(env_file=BASE_DIR / ".env", env_file_encoding="utf-8")
 

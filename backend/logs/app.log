@@ -1,3 +1,9 @@
 2026-06-06 23:06:33,148 [INFO] app: Logging system initialized
 2026-06-06 23:12:47,457 [INFO] app.services.ai: Niubao chat start: messages=1
 2026-06-06 23:12:49,905 [INFO] app.services.ai: Niubao chat success: elapsed=2.45s, replyLen=50
+2026-06-06 23:17:17,201 [INFO] app: Logging system initialized
+2026-06-06 23:17:36,494 [INFO] app.services.ai: Niubao chat start: messages=1
+2026-06-06 23:17:39,886 [INFO] app.services.ai: Niubao chat success: elapsed=3.39s, replyLen=103
+2026-06-06 23:17:53,473 [INFO] app.services.ai: Niubao chat start: messages=3
+2026-06-06 23:17:56,550 [INFO] app.services.ai: Niubao chat success: elapsed=3.08s, replyLen=130
+2026-06-06 23:23:35,418 [INFO] app: Logging system initialized

@@ -7,7 +7,6 @@ from openai import OpenAI
 
 logger = logging.getLogger("app.services.ai")
 
-
 SUMMARY_MAX_CHARS = 300
 CONTENT_MAX_CHARS = 50000
 
@@ -66,6 +65,12 @@ NIUBAO_SYSTEM_PROMPT = (
     "不要使用'本文'、'作者'等距离感的词，直接用'你'来称呼。"
 )
 
+NIUBAO_CHAT_PROMPT = (
+    "你是牛宝，一个温暖、幽默的好朋友。"
+    "请用自然、口语化的语气回复，可以适当使用 emoji，"
+    "回复尽量简短精炼。像真正的朋友一样聊天。"
+)
+
 
 def _callAI(api_key: str, base_url: str, model: str, systemPrompt: str, userContent: str,
             maxTokens: int = 250, temperature: float = 0.3, timeout: int = 30) -> str:
@@ -73,18 +78,29 @@ def _callAI(api_key: str, base_url: str, model: str, systemPrompt: str, userCont
     if not api_key:
         raise ValueError("AI_API_KEY is not configured")
 
-    client = OpenAI(api_key=api_key, base_url=base_url)
-    response = client.chat.completions.create(
-        model=model,
-        messages=[
-            {"role": "system", "content": systemPrompt},
-            {"role": "user", "content": userContent},
-        ],
-        max_tokens=maxTokens,
-        temperature=temperature,
-        timeout=timeout,
-    )
-    return response.choices[0].message.content.strip()
+    start = time.time()
+    logger.info(f"AI call start: model={model}, contentLen={len(userContent)}, maxTokens={maxTokens}")
+
+    try:
+        client = OpenAI(api_key=api_key, base_url=base_url)
+        response = client.chat.completions.create(
+            model=model,
+            messages=[
+                {"role": "system", "content": systemPrompt},
+                {"role": "user", "content": userContent},
+            ],
+            max_tokens=maxTokens,
+            temperature=temperature,
+            timeout=timeout,
+        )
+        elapsed = time.time() - start
+        result = response.choices[0].message.content.strip()
+        logger.info(f"AI call success: elapsed={elapsed:.2f}s, responseLen={len(result)}")
+        return result
+    except Exception as e:
+        elapsed = time.time() - start
+        logger.error(f"AI call failed: elapsed={elapsed:.2f}s, error={e}")
+        raise
 
 
 def generateSummary(content: str, api_key: str, base_url: str, model: str,
@@ -128,22 +144,19 @@ def generateComment(content: str, api_key: str, base_url: str, model: str) -> di
     }
 
 
-NIUBAO_CHAT_PROMPT = (
-    "你是牛宝，一个温暖、幽默的好朋友。"
-    "请用自然、口语化的语气回复，可以适当使用 emoji，"
-    "回复尽量简短精炼。像真正的朋友一样聊天。"
-)
-
-
 def chatWithNiubao(messages: list[dict], api_key: str, base_url: str, model: str) -> dict:
     """Chat with Niubao with multi-turn conversation history."""
     logger.info(f"Niubao chat start: messages={len(messages)}")
+
     start = time.time()
     try:
         client = OpenAI(api_key=api_key, base_url=base_url)
         response = client.chat.completions.create(
             model=model,
-            messages=[{"role": "system", "content": NIUBAO_CHAT_PROMPT}, *messages],
+            messages=[
+                {"role": "system", "content": NIUBAO_CHAT_PROMPT},
+                *messages,
+            ],
             max_tokens=2000,
             temperature=0.8,
             timeout=30,

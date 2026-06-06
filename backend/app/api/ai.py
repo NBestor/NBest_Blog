@@ -1,5 +1,6 @@
-"""AI summary / polish / comment generation API endpoints."""
+"""AI summary / polish / comment / chat generation API endpoints."""
 
+import logging
 import asyncio
 
 from fastapi import APIRouter, Depends, HTTPException, status
@@ -7,9 +8,15 @@ from pydantic import BaseModel, Field
 
 from app.api.auth import getCurrentUser
 from app.core.config import getSettings, Settings
-from app.services.ai_service import generateComment, generateSummary, polishContent
+from app.services.ai_service import (
+    chatWithNiubao,
+    generateComment,
+    generateSummary,
+    polishContent,
+)
 from app.services.comment_service import createTargetComment
 
+logger = logging.getLogger("app.routers.ai")
 
 router = APIRouter(prefix="/ai", tags=["AI"])
 
@@ -52,6 +59,15 @@ class CommentResponse(BaseModel):
     model: str
 
 
+class ChatRequest(BaseModel):
+    messages: list[dict]
+
+
+class ChatResponse(BaseModel):
+    reply: str
+    model: str
+
+
 @router.post("/summary", response_model=SummaryResponse)
 async def generateArticleSummary(
     request: SummaryRequest,
@@ -86,6 +102,7 @@ async def generateArticleSummary(
             detail="AI service timed out, please try again",
         )
     except Exception as exc:
+        logger.error(f"Summary generation failed: {exc}")
         raise HTTPException(
             status_code=status.HTTP_502_BAD_GATEWAY,
             detail=f"AI service error: {exc}",
@@ -123,6 +140,7 @@ async def polishArticleContent(
         raise HTTPException(status_code=status.HTTP_504_GATEWAY_TIMEOUT,
                             detail="AI service timed out")
     except Exception as exc:
+        logger.error(f"Polish failed: {exc}")
         raise HTTPException(status_code=status.HTTP_502_BAD_GATEWAY,
                             detail=f"AI service error: {exc}")
 
@@ -156,6 +174,7 @@ async def generateAiComment(
         raise HTTPException(status_code=status.HTTP_504_GATEWAY_TIMEOUT,
                             detail="AI service timed out")
     except Exception as exc:
+        logger.error(f"Comment generation failed: {exc}")
         raise HTTPException(status_code=status.HTTP_502_BAD_GATEWAY,
                             detail=f"AI service error: {exc}")
 
@@ -176,3 +195,37 @@ async def generateAiComment(
         comment_content=commentContent,
         model=result["model"],
     )
+
+
+@router.post("/chat", response_model=ChatResponse)
+async def chatWithNiuBao(
+    request: ChatRequest,
+    currentUser: int = Depends(getCurrentUser),
+    settings: Settings = Depends(getSettings),
+):
+    """Chat with Niubao (multi-turn conversation)."""
+    if not settings.ai_api_key:
+        raise HTTPException(
+            status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+            detail="AI service is not configured. Set AI_API_KEY in .env",
+        )
+
+    try:
+        result = await asyncio.to_thread(
+            chatWithNiubao,
+            messages=request.messages,
+            api_key=settings.ai_api_key,
+            base_url=settings.ai_base_url,
+            model=settings.ai_model,
+        )
+    except ValueError as exc:
+        raise HTTPException(status_code=status.HTTP_503_SERVICE_UNAVAILABLE, detail=str(exc))
+    except TimeoutError:
+        raise HTTPException(status_code=status.HTTP_504_GATEWAY_TIMEOUT,
+                            detail="AI service timed out")
+    except Exception as exc:
+        logger.error(f"Chat failed: {exc}")
+        raise HTTPException(status_code=status.HTTP_502_BAD_GATEWAY,
+                            detail=f"AI service error: {exc}")
+
+    return ChatResponse(reply=result["reply"], model=result["model"])

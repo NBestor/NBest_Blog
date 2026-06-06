@@ -1,49 +1,36 @@
 ## ADDED Requirements
 
-### Requirement: AI Polish Article Content
-编辑器 SHALL 新增「🤖 AI 润色」按钮，点击后弹出模式选择面板，用户选择润色模式后调用 `POST /ai/polish`，返回润色后的内容替换编辑器正文。
+### Requirement: Backend Logging Configuration
+后端 SHALL 使用 Python `logging` 模块配置统一日志系统，输出到文件和控制台。
 
-#### Scenario: 润色按钮存在
-- **WHEN** 用户在文章编辑器中编辑正文
-- **THEN** 编辑器操作区显示「🤖 AI 润色」按钮
-- **AND** 正文为空时按钮不可用
+#### Scenario: 日志配置文件输出
+- **WHEN** 后端启动时调用 `setupLogging()`
+- **THEN** 日志文件写入 `logs/app.log`
+- **AND** 日志格式包含时间戳、日志级别、模块名、消息内容
+- **AND** 文件大小超过 5MB 时自动轮转，保留最近 3 个文件
 
-#### Scenario: 弹出润色模式选择面板
-- **WHEN** 用户点击「🤖 AI 润色」按钮
-- **AND** 正文非空
-- **THEN** 弹出模态面板，显示 5 种润色模式选项
+#### Scenario: 控制台日志级别过滤
+- **WHEN** 后端运行中发生 WARNING 或 ERROR 级别事件
+- **THEN** 日志同时输出到控制台
+- **AND** INFO 和 DEBUG 级别日志仅写入文件，不输出到控制台
 
-#### Scenario: 5 种润色模式
-- **WHEN** 润色面板显示
-- **THEN** 面板包含以下选项：
-  - 「📐 仅优化排版」— 只调整段落空行、标题层级，**严禁修改任何一个字**
-  - 「🔍 仅改错别字/重复」— 只修正错字和重复内容，不改变原意
-  - 「🎓 学术规范」— 学术化改写，专业严谨
-  - 「🌸 青春文学」— 青春文学风格，文艺清新
-  - 「✏️ 自定义」— 用户输入自定义提示词
+### Requirement: API Route Error Logging
+关键 API 路由 SHALL 在捕获异常时记录错误日志。
 
-#### Scenario: 润色后替换正文
-- **WHEN** 用户选择模式并润色成功
-- **THEN** 面板关闭
-- **AND** 编辑器正文被替换为润色后的内容
+#### Scenario: API 异常记录
+- **WHEN** `articles.py`, `ai.py`, `users.py`, `quick_posts.py`, `comments.py` 中的路由捕获异常
+- **THEN** 使用模块级 logger 记录错误信息
+- **AND** 日志包含请求方法、路径、用户 ID（如已登录）、异常详情
 
-#### Scenario: 自定义模式
-- **WHEN** 用户选择「✏️ 自定义」
-- **THEN** 面板中显示文本输入框
-- **WHEN** 用户填写自定义提示词并提交
-- **THEN** 调用 `POST /ai/polish` 传入 `style="custom"` 和 `custom_prompt`
+### Requirement: AI Service Call Logging
+AI 服务层 SHALL 记录每次 API 调用的详细信息。
 
-### Requirement: Backend Polish API
-后端 SHALL 新增 `POST /ai/polish` 路由。
+#### Scenario: AI 调用成功日志
+- **WHEN** `_callAI()` 成功返回结果
+- **THEN** 记录调用开始（model, contentLen, maxTokens）
+- **AND** 记录调用成功（elapsed 秒数, responseLen）
 
-#### Scenario: 润色请求
-- **WHEN** 接收到 `POST /ai/polish` 请求体 `{ content, style, custom_prompt? }`
-- **THEN** 根据 style 选择对应 system prompt 调用 AI
-- **AND** 返回 `{ polished, model }`
-
-#### Scenario: style 映射
-- `formatting` → 排版优化 prompt（严禁修改文字）
-- `typo` → 错别字修正 prompt
-- `academic` → 学术规范 prompt
-- `youth_lit` → 青春文学 prompt
-- `custom` → 使用 `custom_prompt`
+#### Scenario: AI 调用失败日志
+- **WHEN** `_callAI()` 抛出异常
+- **THEN** 记录调用失败（elapsed 秒数, 异常信息）
+- **AND** 重新抛出异常（不吞掉错误）

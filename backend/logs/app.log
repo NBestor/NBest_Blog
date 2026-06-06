@@ -1,0 +1,3 @@
+2026-06-06 23:06:33,148 [INFO] app: Logging system initialized
+2026-06-06 23:12:47,457 [INFO] app.services.ai: Niubao chat start: messages=1
+2026-06-06 23:12:49,905 [INFO] app.services.ai: Niubao chat success: elapsed=2.45s, replyLen=50

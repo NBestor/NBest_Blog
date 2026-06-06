@@ -6,6 +6,7 @@ from fastapi.staticfiles import StaticFiles
 
 from app.api.router import apiRouter
 from app.core.config import getSettings
+from app.core.logging import setupLogging
 from app.db.database import initDatabase
 
 
@@ -14,6 +15,7 @@ async def lifespan(app: FastAPI):
     settings = getSettings()
     settings.static_dir.mkdir(parents=True, exist_ok=True)
     settings.upload_dir.mkdir(parents=True, exist_ok=True)
+    setupLogging()
     initDatabase()
     yield
 

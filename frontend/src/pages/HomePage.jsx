@@ -358,6 +358,11 @@ function HomePage() {
         </aside>
       ) : null}
 
+      {isAuthenticated && (
+        <Link to="/niubao" className="niubao-pet" title="跟牛宝聊天">
+          <span className="niubao-pet-emoji">🐮</span>
+        </Link>
+      )}
       {message ? <p className="form-error relation-error">{message}</p> : null}
       {isLoading ? <div className="content-panel">正在加载首页...</div> : null}
 

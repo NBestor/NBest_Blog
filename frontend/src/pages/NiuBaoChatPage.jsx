@@ -10,13 +10,17 @@ import highlightSsr from '@bytemd/plugin-highlight-ssr';
 import math from '@bytemd/plugin-math';
 import { Viewer } from '@bytemd/react';
 
+import { useAuth } from '../contexts/use-auth';
 import httpClient from '../api/http-client';
 
 function ChatPage() {
   const navigate = useNavigate();
+  const { user } = useAuth();
+  const storageKey = useMemo(() => (user ? `niubao_chats_${user.id}` : 'niubao_chats_guest'), [user]);
+
   const initialConversations = useMemo(() => {
     try {
-      const stored = localStorage.getItem('niubao_chats');
+      const stored = localStorage.getItem(storageKey);
       return stored ? JSON.parse(stored) : [];
     } catch {
       return [];
@@ -32,8 +36,8 @@ function ChatPage() {
   const viewerPlugins = useMemo(() => [gfm(), math({ katexOptions: { strict: false } }), highlightSsr()], []);
 
   useEffect(() => {
-    localStorage.setItem('niubao_chats', JSON.stringify(conversations));
-  }, [conversations]);
+    localStorage.setItem(storageKey, JSON.stringify(conversations));
+  }, [conversations, storageKey]);
 
   useEffect(() => {
     if (activeChatId) {
@@ -49,11 +53,7 @@ function ChatPage() {
   }, [messages]);
 
   function handleNewChat() {
-    const newChat = {
-      id: Date.now().toString(),
-      title: '新对话',
-      messages: [],
-    };
+    const newChat = { id: Date.now().toString(), title: '新对话', messages: [] };
     setConversations((prev) => [newChat, ...prev]);
     setActiveChatId(newChat.id);
   }
@@ -70,21 +70,17 @@ function ChatPage() {
   async function handleSend() {
     const text = input.trim();
     if (!text || loading) return;
-
     const newMessages = [...messages, { role: 'user', content: text }];
     setMessages(newMessages);
     setInput('');
     setLoading(true);
-
     try {
       const response = await httpClient.post('/ai/chat', { messages: newMessages });
       const updatedMessages = [...newMessages, { role: 'assistant', content: response.data.reply }];
       setMessages(updatedMessages);
       setConversations((prev) =>
         prev.map((c) =>
-          c.id === activeChatId
-            ? { ...c, title: text.slice(0, 30), messages: updatedMessages }
-            : c
+          c.id === activeChatId ? { ...c, title: text.slice(0, 30), messages: updatedMessages } : c
         )
       );
     } catch {
@@ -117,26 +113,15 @@ function ChatPage() {
                 onClick={() => setActiveChatId(chat.id)}
               >
                 <span>{chat.title}</span>
-                <button className="chat-conv-delete" onClick={(e) => handleDeleteChat(chat.id, e)}>
-                  ✕
-                </button>
+                <button className="chat-conv-delete" onClick={(e) => handleDeleteChat(chat.id, e)}>✕</button>
               </button>
             ))}
-            {conversations.length === 0 && (
-              <p className="empty-text" style={{ padding: 12 }}>点击上方按钮开始对话</p>
-            )}
           </div>
         </aside>
         <main className="chat-main">
           {activeChatId ? (
             <>
               <div className="chat-messages">
-                {messages.length === 0 && (
-                  <div className="chat-empty">
-                    <p style={{ fontSize: 32, margin: '0 0 12px' }}>🐮</p>
-                    <p style={{ color: '#888' }}>你好！我是牛宝，有什么想聊的吗？</p>
-                  </div>
-                )}
                 {messages.map((msg, i) => (
                   <div key={i} className={`chat-bubble ${msg.role === 'user' ? 'chat-bubble-user' : 'chat-bubble-bot'}`}>
                     {msg.role === 'assistant' ? (
@@ -148,24 +133,12 @@ function ChatPage() {
                     )}
                   </div>
                 ))}
-                {loading && (
-                  <div className="chat-bubble chat-bubble-bot">
-                    <p>🤔 牛宝正在思考...</p>
-                  </div>
-                )}
+                {loading && <div className="chat-bubble chat-bubble-bot"><p>🤔 牛宝正在思考...</p></div>}
                 <div ref={messagesEndRef} />
               </div>
               <div className="chat-input-row">
-                <input
-                  value={input}
-                  onChange={(e) => setInput(e.target.value)}
-                  onKeyDown={handleKeyDown}
-                  placeholder="跟牛宝说点什么..."
-                  disabled={loading}
-                />
-                <button onClick={handleSend} disabled={loading || !input.trim()}>
-                  发送
-                </button>
+                <input value={input} onChange={(e) => setInput(e.target.value)} onKeyDown={handleKeyDown} placeholder="跟牛宝说点什么..." disabled={loading} />
+                <button onClick={handleSend} disabled={loading || !input.trim()}>发送</button>
               </div>
             </>
           ) : (

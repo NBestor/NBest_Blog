@@ -27,6 +27,7 @@ export const routes = [
   { path: '/calendar', label: '日历', title: '日历备忘录', description: '生日、纪念日与年度重复页面框架。', visibility: 'auth', showInNav: false },
   { path: '/quick/note', label: '快记', title: '私密快记', description: '仅自己可见的快记页面框架。', visibility: 'auth' },
   { path: '/admin', label: '管理', title: '管理', description: '管理员用户与内容治理。', visibility: 'admin' },
+  { path: '/niubao', label: '牛宝', title: '牛宝对话', description: '与牛宝 AI 对话。', visibility: 'auth', showInNav: false },
 ];
 
 export const privatePaths = new Set(

@@ -13,6 +13,7 @@ import CalendarPage from './pages/CalendarPage';
 import FollowPage from './pages/FollowPage';
 import HomePage from './pages/HomePage';
 import LoginPage from './pages/LoginPage';
+import NiuBaoChatPage from './pages/NiuBaoChatPage';
 import NotFoundPage from './pages/NotFoundPage';
 import PlaceholderPage from './pages/PlaceholderPage';
 import PhotoPage from './pages/PhotoPage';
@@ -95,6 +96,14 @@ function getRouteElement(route) {
 
   if (route.path === '/photo') {
     return <PhotoPage />;
+  }
+
+  if (route.path === '/niubao') {
+    return (
+      <ProtectedRoute>
+        <NiuBaoChatPage />
+      </ProtectedRoute>
+    );
   }
 
   if (route.path === '/admin') {

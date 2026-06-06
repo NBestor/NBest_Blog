@@ -1,5 +1,6 @@
 import re
 
+from app.core.timezone import toBeijingTime
 from app.db.database import getDatabaseConnection
 from app.services.article_category_service import canUseCategory
 from app.services.article_tag_service import getArticleTags, syncArticleTags
@@ -33,8 +34,8 @@ def formatArticle(row: Row) -> dict[str, str | int | bool | None]:
         "category_name": row["category_name"] if "category_name" in row.keys() else None,
         "visible_type": row["visible_type"],
         "tags": getArticleTags(row["id"]),
-        "create_time": row["create_time"],
-        "update_time": row["update_time"],
+        "create_time": toBeijingTime(row["create_time"]),
+        "update_time": toBeijingTime(row["update_time"]),
     }
     return article
 
@@ -287,7 +288,7 @@ def listVisibleArticles(currentUserId: int | None) -> list[dict[str, str | int |
             JOIN users ON users.id = articles.user_id
             LEFT JOIN article_categories ON article_categories.id = articles.category_id
             WHERE articles.is_draft = 0
-            ORDER BY articles.update_time DESC, articles.id DESC
+            ORDER BY articles.create_time DESC, articles.id DESC
             """
         ).fetchall()
 

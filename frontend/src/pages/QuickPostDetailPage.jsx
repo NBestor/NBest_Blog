@@ -14,12 +14,15 @@ const visibleLabels = {
 
 function QuickPostDetailPage() {
   const { id } = useParams();
-  const { isAuthenticated } = useAuth();
+  const { isAuthenticated, user } = useAuth();
   const [post, setPost] = useState(null);
   const [comments, setComments] = useState([]);
   const [message, setMessage] = useState('');
   const [commentMessage, setCommentMessage] = useState('');
   const [isLoading, setIsLoading] = useState(true);
+  const [editingPostId, setEditingPostId] = useState(null);
+  const [editContent, setEditContent] = useState('');
+  const [editVisibleType, setEditVisibleType] = useState('public');
 
   async function fetchDetail() {
     const [postResponse, commentsResponse] = await Promise.all([
@@ -98,6 +101,36 @@ function QuickPostDetailPage() {
     }
   }
 
+  function handleStartEdit() {
+    setEditingPostId(post.id);
+    setEditContent(post.content);
+    setEditVisibleType(post.visible_type);
+  }
+
+  function handleCancelEdit() {
+    setEditingPostId(null);
+    setEditContent('');
+  }
+
+  async function handleSaveEdit() {
+    if (!editContent.trim()) {
+      setMessage('内容不能为空');
+      return;
+    }
+
+    try {
+      await httpClient.put(`/quick-posts/${post.id}`, {
+        content: editContent.trim(),
+        visible_type: editVisibleType,
+      });
+      setEditingPostId(null);
+      setEditContent('');
+      await fetchDetail();
+    } catch {
+      setMessage('快写编辑失败');
+    }
+  }
+
   if (isLoading) {
     return (
       <section className="page-section">
@@ -126,15 +159,44 @@ function QuickPostDetailPage() {
           返回首页
         </Link>
         <div className="article-meta">
-          <span>{post.author_nickname}</span>
+          <Link to={`/user/${post.user_id}`}>{post.author_nickname}</Link>
           <span>{visibleLabels[post.visible_type]}</span>
           <span>{post.like_count} 赞</span>
           <span>{post.comment_count} 评论</span>
           <span>{post.create_time}</span>
         </div>
-        <p>{post.content}</p>
+        {editingPostId === post.id ? (
+          <>
+            <textarea
+              maxLength={1000}
+              onChange={(event) => setEditContent(event.target.value)}
+              rows={4}
+              value={editContent}
+            />
+            <div className="editor-actions">
+              <select onChange={(event) => setEditVisibleType(event.target.value)} value={editVisibleType}>
+                <option value="public">公开</option>
+                <option value="friend">好友可见</option>
+                <option value="self">仅自己可见</option>
+              </select>
+              <button onClick={handleSaveEdit} type="button">
+                保存
+              </button>
+              <button className="secondary-button" onClick={handleCancelEdit} type="button">
+                取消
+              </button>
+            </div>
+          </>
+        ) : (
+          <p>{post.content}</p>
+        )}
         <div className="editor-actions">
           <LikeButton count={post.like_count} disabled={!isAuthenticated} isLiked={post.is_liked} onClick={handleToggleLike} />
+          {user && post.user_id === user.id && editingPostId !== post.id && (
+            <button className="secondary-button" type="button" onClick={handleStartEdit}>
+              ✏️ 编辑
+            </button>
+          )}
           {!isAuthenticated && <p className="form-message">登录后可点赞和评论。</p>}
           {message && <p className="form-error">{message}</p>}
         </div>

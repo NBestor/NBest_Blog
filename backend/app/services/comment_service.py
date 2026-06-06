@@ -1,5 +1,6 @@
 from sqlite3 import Row
 
+from app.core.timezone import toBeijingTime
 from app.db.database import getDatabaseConnection
 from app.services.interaction_service import getCommentStats
 
@@ -12,7 +13,7 @@ def formatComment(row: Row, currentUserId: int | None = None) -> dict[str, str |
         "parent_id": row["parent_id"],
         "author_nickname": row["author_nickname"],
         "content": row["content"],
-        "create_time": row["create_time"],
+        "create_time": toBeijingTime(row["create_time"]),
         **getCommentStats(row["id"], currentUserId),
         "children": [],
     }

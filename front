@@ -96,12 +96,16 @@ function AIModePanel({ title, options, onSelect, onClose, isOpen, isLoading: pan
 
 function PolishResultModal({ content, onApply, onClose }) {
   async function handleCopy() {
-    try { await navigator.clipboard.writeText(content); } catch { /* fallback */ }
+    try {
+      await navigator.clipboard.writeText(content);
+    } catch {
+      // fallback silently
+    }
   }
 
   return (
     <div className="ai-mode-backdrop" onClick={(e) => { if (e.target === e.currentTarget) onClose(); }}>
-      <div className="ai-mode-panel" style={{ width: 'min(90vw, 900px)', maxHeight: 'min(85vh, 750px)' }}>
+      <div className="ai-mode-panel ai-polish-result">
         <div className="ai-mode-header">
           <h3>✨ 润色结果</h3>
           <button className="text-button" type="button" onClick={onClose}>✕</button>
@@ -110,8 +114,12 @@ function PolishResultModal({ content, onApply, onClose }) {
           <pre className="markdown-source" style={{ maxHeight: '50vh' }}>{content}</pre>
         </div>
         <div className="editor-actions" style={{ justifyContent: 'flex-end', marginTop: 12 }}>
-          <button className="secondary-button" type="button" onClick={handleCopy}>📋 复制</button>
-          <button type="button" onClick={onApply}>✅ 覆盖原文</button>
+          <button className="secondary-button" type="button" onClick={handleCopy}>
+            📋 复制
+          </button>
+          <button type="button" onClick={onApply}>
+            ✅ 覆盖原文
+          </button>
         </div>
       </div>
     </div>
@@ -175,9 +183,7 @@ function BlogEditPage() {
 
       fetchArticle();
 
-      return () => {
-        isMounted = false;
-      };
+      return () => { isMounted = false; };
     }
   }, [articleId, isPublishedMode]);
 
@@ -206,21 +212,15 @@ function BlogEditPage() {
           setCurrentDraftId(String(response.data.id));
         }
       } catch {
-        if (isMounted) {
-          setMessage('草稿读取失败');
-        }
+        if (isMounted) setMessage('草稿读取失败');
       } finally {
-        if (isMounted) {
-          setIsLoading(false);
-        }
+        if (isMounted) setIsLoading(false);
       }
     }
 
     fetchDraft();
 
-    return () => {
-      isMounted = false;
-    };
+    return () => { isMounted = false; };
   }, [draftId]);
 
   useEffect(() => {
@@ -246,21 +246,15 @@ function BlogEditPage() {
     async function fetchCategories() {
       try {
         const response = await httpClient.get('/article-categories');
-        if (isMounted) {
-          setCategories(response.data.items);
-        }
+        if (isMounted) setCategories(response.data.items);
       } catch {
-        if (isMounted) {
-          setMessage('分类加载失败');
-        }
+        if (isMounted) setMessage('分类加载失败');
       }
     }
 
     fetchCategories();
 
-    return () => {
-      isMounted = false;
-    };
+    return () => { isMounted = false; };
   }, []);
 
   function handleChange(event) {
@@ -280,20 +274,14 @@ function BlogEditPage() {
       content: cleanContent(formData.content.trim()),
       category_id: formData.category_id ? Number(formData.category_id) : null,
       visible_type: formData.visible_type,
-      tags: formData.tags
-        .split(',')
-        .map((tag) => tag.trim())
-        .filter(Boolean),
+      tags: formData.tags.split(',').map((tag) => tag.trim()).filter(Boolean),
     };
   }
 
   async function handleAISummary(style, customPrompt) {
     setAiPanelMode(null);
     const content = formData.content.trim();
-    if (!content) {
-      setMessage('请先编写文章内容');
-      return;
-    }
+    if (!content) { setMessage('请先编写文章内容'); return; }
 
     setMessage('');
     setAiLoading(true);
@@ -303,16 +291,13 @@ function BlogEditPage() {
       const requestBody = { content };
       if (style) {
         requestBody.style = style;
-        if (customPrompt) {
-          requestBody.custom_prompt = customPrompt;
-        }
+        if (customPrompt) requestBody.custom_prompt = customPrompt;
       }
       const response = await httpClient.post('/ai/summary', requestBody);
       setFormData((currentData) => ({ ...currentData, summary: response.data.summary }));
       setAiModel(response.data.model);
     } catch (error) {
-      const detail = error.response?.data?.detail || 'AI 生成失败，请稍后重试';
-      setMessage(detail);
+      setMessage(error.response?.data?.detail || 'AI 生成失败，请稍后重试');
     } finally {
       setAiLoading(false);
     }
@@ -321,24 +306,18 @@ function BlogEditPage() {
   async function handleAIPolish(style, customPrompt) {
     setAiPanelMode(null);
     const content = formData.content.trim();
-    if (!content) {
-      setMessage('请先编写文章内容');
-      return;
-    }
+    if (!content) { setMessage('请先编写文章内容'); return; }
 
     setMessage('');
     setAiLoading(true);
 
     try {
       const requestBody = { content, style: style || 'formatting' };
-      if (customPrompt) {
-        requestBody.custom_prompt = customPrompt;
-      }
+      if (customPrompt) requestBody.custom_prompt = customPrompt;
       const response = await httpClient.post('/ai/polish', requestBody);
       setPolishedResult(response.data.polished);
     } catch (error) {
-      const detail = error.response?.data?.detail || 'AI 润色失败，请稍后重试';
-      setMessage(detail);
+      setMessage(error.response?.data?.detail || 'AI 润色失败，请稍后重试');
     } finally {
       setAiLoading(false);
     }
@@ -352,9 +331,7 @@ function BlogEditPage() {
 
   async function handleCreateCategory() {
     const categoryName = newCategoryName.trim();
-    if (!categoryName) {
-      return;
-    }
+    if (!categoryName) return;
 
     try {
       const response = await httpClient.post('/article-categories', { name: categoryName });
@@ -372,9 +349,7 @@ function BlogEditPage() {
 
   async function handleImageUpload(event) {
     const file = event.target.files?.[0];
-    if (!file) {
-      return;
-    }
+    if (!file) return;
 
     const imageFormData = new FormData();
     imageFormData.append('image', file);
@@ -426,14 +401,8 @@ function BlogEditPage() {
       if (enableNiubaoComment) {
         setEnableNiubaoComment(false);
         try {
-          await httpClient.post('/ai/comment', {
-            content: payload.content,
-            target_type: 'article',
-            target_id: parseInt(articleId),
-          });
-        } catch {
-          // AI comment failure is silent
-        }
+          await httpClient.post('/ai/comment', { content: payload.content, target_type: 'article', target_id: parseInt(articleId) });
+        } catch { /* silent */ }
       }
       navigate(`/blog/detail/${articleId}`);
     } catch {
@@ -458,14 +427,8 @@ function BlogEditPage() {
       if (enableNiubaoComment) {
         setEnableNiubaoComment(false);
         try {
-          await httpClient.post('/ai/comment', {
-            content: payload.content,
-            target_type: 'article',
-            target_id: publishedId,
-          });
-        } catch {
-          // AI comment failure is silent
-        }
+          await httpClient.post('/ai/comment', { content: payload.content, target_type: 'article', target_id: publishedId });
+        } catch { /* silent */ }
       }
       navigate(`/blog/detail/${publishedId}`);
     } catch {
@@ -512,10 +475,7 @@ function BlogEditPage() {
             className="secondary-button"
             type="button"
             onClick={() => {
-              if (!formData.content.trim()) {
-                setMessage('请先编写文章内容');
-                return;
-              }
+              if (!formData.content.trim()) { setMessage('请先编写文章内容'); return; }
               setAiPanelMode('summary');
             }}
             disabled={aiLoading}
@@ -525,9 +485,7 @@ function BlogEditPage() {
           {!formData.summary.trim() && !aiLoading && !aiModel && (
             <span className="ai-hint">用 AI 帮你生成？</span>
           )}
-          {aiModel && (
-            <span className="ai-model-label">由 {aiModel} 生成</span>
-          )}
+          {aiModel && <span className="ai-model-label">由 {aiModel} 生成</span>}
         </div>
         <div className="article-meta-grid">
           <label>
@@ -535,9 +493,7 @@ function BlogEditPage() {
             <select name="category_id" value={formData.category_id} onChange={handleChange}>
               <option value="">无分类</option>
               {categories.map((category) => (
-                <option key={category.id} value={category.id}>
-                  {category.name}
-                </option>
+                <option key={category.id} value={category.id}>{category.name}</option>
               ))}
             </select>
           </label>
@@ -560,9 +516,7 @@ function BlogEditPage() {
             onChange={(event) => setNewCategoryName(event.target.value)}
             placeholder="新分类名称"
           />
-          <button className="secondary-button" type="button" onClick={handleCreateCategory}>
-            新建分类
-          </button>
+          <button className="secondary-button" type="button" onClick={handleCreateCategory}>新建分类</button>
           <label className="file-button" title="选择图片文件，上传后将自动插入到正文末尾">
             上传图片
             <input type="file" accept="image/png,image/jpeg,image/webp" onChange={handleImageUpload} />
@@ -578,21 +532,14 @@ function BlogEditPage() {
         </div>
         <div className="editor-actions">
           {isPublishedMode ? (
-            <button type="button" onClick={handleSaveArticle} disabled={isSubmitting}>
-              保存修改
-            </button>
+            <button type="button" onClick={handleSaveArticle} disabled={isSubmitting}>保存修改</button>
           ) : (
             <>
-              <button type="button" onClick={handleSaveDraft} disabled={isSubmitting}>
-                保存草稿
-              </button>
-              <button className="secondary-button" type="button" onClick={handlePublish} disabled={isSubmitting}>
-                发布
-              </button>
+              <button type="button" onClick={handleSaveDraft} disabled={isSubmitting}>保存草稿</button>
+              <button className="secondary-button" type="button" onClick={handlePublish} disabled={isSubmitting}>发布</button>
             </>
           )}
           <button
-            className="secondary-button"
             type="button"
             onClick={() => setAiPanelMode('polish')}
             disabled={aiLoading || !formData.content.trim()}
@@ -600,11 +547,7 @@ function BlogEditPage() {
             🤖 AI 润色
           </button>
           <label className="todo-check">
-            <input
-              type="checkbox"
-              checked={enableNiubaoComment}
-              onChange={(e) => setEnableNiubaoComment(e.target.checked)}
-            />
+            <input type="checkbox" checked={enableNiubaoComment} onChange={(e) => setEnableNiubaoComment(e.target.checked)} />
             🤖 牛宝评论
           </label>
           {message && <p className="form-message">{message}</p>}

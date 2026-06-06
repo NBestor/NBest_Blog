@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 
 import httpClient from '../api/http-client';
 import { ChevronIcon } from '../components/icons';
@@ -153,8 +153,18 @@ function HomePage() {
   const [editingPostId, setEditingPostId] = useState(null);
   const [editContent, setEditContent] = useState('');
   const [editVisibleType, setEditVisibleType] = useState('public');
+  const [enableNiubaoComment, setEnableNiubaoComment] = useState(false);
 
-  const upcomingTodos = useMemo(() => todos.filter((todo) => !todo.is_done).slice(0, 5), [todos]);
+  const upcomingTodos = useMemo(() => {
+    const incomplete = todos.filter((todo) => !todo.is_done);
+    incomplete.sort((a, b) => {
+      if (!a.due_date && !b.due_date) return 0;
+      if (!a.due_date) return 1;
+      if (!b.due_date) return -1;
+      return a.due_date.localeCompare(b.due_date);
+    });
+    return incomplete.slice(0, 5);
+  }, [todos]);
 
   const loadHome = useCallback(async () => {
     setMessage('');
@@ -222,8 +232,20 @@ function HomePage() {
     }
 
     try {
-      await httpClient.post('/quick-posts', { content: content.trim(), visible_type: visibleType });
+      const response = await httpClient.post('/quick-posts', { content: content.trim(), visible_type: visibleType });
       setContent('');
+      if (enableNiubaoComment) {
+        setEnableNiubaoComment(false);
+        try {
+          await httpClient.post('/ai/comment', {
+            content: response.data.content,
+            target_type: 'quick_post',
+            target_id: response.data.id,
+          });
+        } catch {
+          // AI comment failure is silent
+        }
+      }
       await loadHome();
     } catch {
       setMessage('快写发布失败');
@@ -276,6 +298,15 @@ function HomePage() {
     }
   }
 
+  async function handleTodoToggle(todo) {
+    try {
+      await httpClient.put(`/todos/${todo.id}`, { is_done: true });
+      await loadHome();
+    } catch {
+      setTodoMessage('待办操作失败');
+    }
+  }
+
   async function handleDeleteQuickPost(event, post) {
     event.stopPropagation();
     try {
@@ -309,10 +340,18 @@ function HomePage() {
               {todoMessage ? <p className="form-error">{todoMessage}</p> : null}
               {upcomingTodos.length === 0 ? <p className="empty-text">暂无未完成待办。</p> : null}
               {upcomingTodos.map((todo) => (
-                <button className="home-mini-item" key={todo.id} onClick={() => navigate('/todo')} type="button">
-                  <strong>{todo.title}</strong>
-                  <span>{todo.due_date || '无截止日期'}</span>
-                </button>
+                <div className="home-mini-item home-todo-row" key={todo.id}>
+                  <input
+                    type="checkbox"
+                    checked={false}
+                    onChange={() => handleTodoToggle(todo)}
+                    onClick={(e) => e.stopPropagation()}
+                  />
+                  <div>
+                    <strong>{todo.title}</strong>
+                    {todo.due_date && <span>{todo.due_date}</span>}
+                  </div>
+                </div>
               ))}
             </div>
           ) : null}
@@ -346,7 +385,7 @@ function HomePage() {
                   <h2>{article.title}</h2>
                   <p>{article.summary || '暂无简介'}</p>
                   <div className="article-meta">
-                    <span>{article.author_nickname}</span>
+                    <Link to={`/user/${article.user_id}`} onClick={(e) => e.stopPropagation()}>{article.author_nickname}</Link>
                     <span>{article.category_name || '无分类'}</span>
                     <span>{visibleLabels[article.visible_type] || '仅自己可见'}</span>
                     <span>{article.like_count} 赞</span>
@@ -385,6 +424,14 @@ function HomePage() {
                   </select>
                   <button type="submit">发布快写</button>
                 </div>
+                <label className="todo-check">
+                  <input
+                    type="checkbox"
+                    checked={enableNiubaoComment}
+                    onChange={(e) => setEnableNiubaoComment(e.target.checked)}
+                  />
+                  🤖 牛宝评论
+                </label>
               </form>
             ) : (
               <div className="content-panel">
@@ -431,7 +478,7 @@ function HomePage() {
                     onClick={() => navigate(`/quick-posts/${post.id}`)}
                   >
                     <div className="article-meta">
-                      <span>{post.author_nickname}</span>
+                      <Link to={`/user/${post.user_id}`} onClick={(e) => e.stopPropagation()}>{post.author_nickname}</Link>
                       <span>{visibleLabels[post.visible_type]}</span>
                     </div>
                     <p>{post.content}</p>

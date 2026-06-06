@@ -351,6 +351,38 @@ def initDatabase() -> None:
         )
         connection.commit()
 
+        # Ensure Niubao AI bot account exists (ID=666)
+        niubaoRow = connection.execute("SELECT * FROM users WHERE id = 666").fetchone()
+        if niubaoRow is None:
+            connection.execute(
+                """
+                INSERT INTO users (id, username, password_hash, nickname, role)
+                VALUES (?, ?, ?, ?, ?)
+                """,
+                (666, "niubao", getPasswordHash("niubao_bot_666_internal"), "牛宝", "user"),
+            )
+        else:
+            connection.execute(
+                "UPDATE users SET username = ?, nickname = ?, role = ? WHERE id = 666",
+                ("niubao", "牛宝", "user"),
+            )
+        connection.commit()
+
+        # Ensure Niubao is friends with all existing users
+        existingUsers = connection.execute(
+            "SELECT id FROM users WHERE id != 666"
+        ).fetchall()
+        for userRow in existingUsers:
+            connection.execute(
+                "INSERT OR IGNORE INTO follows (user_id, follow_user_id) VALUES (?, ?)",
+                (666, userRow["id"]),
+            )
+            connection.execute(
+                "INSERT OR IGNORE INTO follows (user_id, follow_user_id) VALUES (?, ?)",
+                (userRow["id"], 666),
+            )
+        connection.commit()
+
 
 def canConnectDatabase() -> bool:
     with getDatabaseConnection() as connection:

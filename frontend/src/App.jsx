@@ -17,12 +17,11 @@ import NotFoundPage from './pages/NotFoundPage';
 import PlaceholderPage from './pages/PlaceholderPage';
 import PhotoPage from './pages/PhotoPage';
 import QuickPostDetailPage from './pages/QuickPostDetailPage';
-import ProfilePage from './pages/ProfilePage';
 import QuickNotePage from './pages/QuickNotePage';
 import RegisterPage from './pages/RegisterPage';
 import SearchPage from './pages/SearchPage';
 import TodoPage from './pages/TodoPage';
-import UserSettingPage from './pages/UserSettingPage';
+import UserProfilePage from './pages/UserProfilePage';
 import { privatePaths, routes } from './routes/route-config';
 
 function getRouteElement(route) {
@@ -36,14 +35,6 @@ function getRouteElement(route) {
 
   if (route.path === '/user/register') {
     return <RegisterPage />;
-  }
-
-  if (route.path === '/user/profile') {
-    return (
-      <ProtectedRoute>
-        <ProfilePage />
-      </ProtectedRoute>
-    );
   }
 
   if (route.path === '/blog/edit') {
@@ -82,14 +73,6 @@ function getRouteElement(route) {
     return (
       <ProtectedRoute>
         <QuickNotePage />
-      </ProtectedRoute>
-    );
-  }
-
-  if (route.path === '/user/setting') {
-    return (
-      <ProtectedRoute>
-        <UserSettingPage />
       </ProtectedRoute>
     );
   }
@@ -149,6 +132,10 @@ const router = createBrowserRouter([
       {
         path: 'quick-posts/:id',
         element: <QuickPostDetailPage />,
+      },
+      {
+        path: 'user/:id',
+        element: <UserProfilePage />,
       },
       {
         path: 'search',

@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 
 import httpClient from '../api/http-client';
 import { useAuth } from '../contexts/use-auth';
@@ -71,7 +71,7 @@ function BlogListPage() {
               <h2>{article.title}</h2>
               <p>{article.summary || '暂无简介'}</p>
               <div className="article-meta">
-                <span>{article.author_nickname}</span>
+                <Link to={`/user/${article.user_id}`} onClick={(e) => e.stopPropagation()}>{article.author_nickname}</Link>
                 <span>{article.category_name || '无分类'}</span>
                 <span>{visibleTypeLabels[article.visible_type] || '仅自己可见'}</span>
                 <span>{article.like_count} 赞</span>

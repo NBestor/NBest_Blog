@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { NavLink, Outlet, useNavigate } from 'react-router-dom';
+import { Link, NavLink, Outlet, useNavigate } from 'react-router-dom';
 
 import ApiStatus from '../components/ApiStatus';
 import { SearchIcon } from '../components/icons';
@@ -35,6 +35,11 @@ function AppLayout() {
   const primaryNavRoutes = navRoutes.slice(0, 8);
   const secondaryNavRoutes = navRoutes.slice(8);
   const displayName = user?.nickname || user?.username;
+  const avatarUrl = user?.avatar_url
+    ? user.avatar_url.startsWith('http')
+      ? user.avatar_url
+      : `http://127.0.0.1:8000${user.avatar_url}`
+    : '';
 
   function handleSearchSubmit(event) {
     event.preventDefault();
@@ -73,7 +78,14 @@ function AppLayout() {
             </form>
             {isAuthenticated ? (
               <>
-                <span className="user-chip">{displayName}</span>
+                <Link to={`/user/${user.id}`}>
+                  {avatarUrl ? (
+                    <img className="navbar-avatar" src={avatarUrl} alt={displayName} />
+                  ) : (
+                    <span className="navbar-avatar-placeholder">{displayName?.charAt(0)}</span>
+                  )}
+                </Link>
+                <Link to={`/user/${user.id}`} className="user-chip">{displayName}</Link>
                 <button className="text-button" onClick={logout} type="button">
                   退出
                 </button>
@@ -102,4 +114,3 @@ function AppLayout() {
 }
 
 export default AppLayout;
-

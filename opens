@@ -1,0 +1,50 @@
+## ADDED Requirements
+
+### Requirement: AI Bot Account Initialization
+后端启动时 SHALL 确保 AI 账号（ID=666, username="niubao", nickname="牛宝", role="user"）存在，并自动加为所有用户的好友。
+
+#### Scenario: 牛宝账号自动创建
+- **WHEN** 后端首次启动或数据库中不存在 ID=666 的账号时
+- **THEN** 自动创建该账号
+- **AND** 密码使用随机加密哈希（不可登录）
+- **AND** 为所有现有用户建立双向好友关系（follows 表 INSERT 两条记录）
+
+#### Scenario: 新用户注册后自动加牛宝好友
+- **WHEN** 新用户注册成功
+- **THEN** 牛宝与新用户自动建立双向好友关系
+
+### Requirement: AI Comment Toggle in Editor and Quick Post
+文章编辑器和快写发布框 SHALL 提供「🤖 牛宝评论」勾选框，默认关闭。勾选后发布/保存时自动请求 AI 评论。
+
+#### Scenario: 博客编辑器显示勾选框
+- **WHEN** 用户在博客编辑器中编辑（新建或编辑已发布文章）
+- **THEN** 编辑器底部操作区显示 checkbox「🤖 牛宝评论」
+- **AND** 默认不勾选
+
+#### Scenario: 快写发布框显示勾选框
+- **WHEN** 用户在首页快写发布区域编辑快写
+- **THEN** 发布按钮旁显示 checkbox「🤖 牛宝评论」
+- **AND** 默认不勾选
+
+#### Scenario: 勾选后发布时自动评论
+- **WHEN** 勾选了「🤖 牛宝评论」后发布/保存
+- **THEN** 前端在发布成功后调用 `POST /ai/comment`，传入 `content`、`target_type`、`target_id`
+- **AND** AI 以"牛宝"身份在文章/快写下自动发评论
+
+### Requirement: Backend AI Comment API
+后端 SHALL 新增 `POST /ai/comment` 路由。
+
+#### Scenario: AI 评论请求
+- **WHEN** 接收到 `POST /ai/comment` 请求体 `{ content, target_type, target_id }`
+- **THEN** 调用 AI 生成一条评论（风格：温暖、幽默，或安慰/建议/鼓励）
+- **AND** 以牛宝（ID=666）身份创建评论
+- **AND** 返回 `{ comment_id, comment_content, model }`
+
+#### Scenario: AI 评论风格 prompt
+- **WHEN** 生成 AI 评论
+- **THEN** system prompt 为："你是牛宝，一个温暖、幽默的好朋友。请根据以下内容，发表一段或安慰、或建议、或鼓励的评论，控制在 200 字符以内，语气自然像朋友聊天。"
+
+#### Scenario: AI 评论失败不阻断发布
+- **WHEN** AI 评论请求失败
+- **THEN** 文章/快写仍然正常发布
+- **AND** 不显示错误提示

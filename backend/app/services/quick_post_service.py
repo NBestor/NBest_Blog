@@ -1,5 +1,6 @@
 from sqlite3 import Row
 
+from app.core.timezone import toBeijingTime
 from app.db.database import getDatabaseConnection
 from app.services.article_service import isFriend
 from app.services.interaction_service import getQuickPostStats
@@ -24,8 +25,8 @@ def formatQuickPost(row: Row, currentUserId: int | None) -> dict[str, str | int 
         "author_nickname": row["author_nickname"],
         "content": row["content"],
         "visible_type": row["visible_type"],
-        "create_time": row["create_time"],
-        "update_time": row["update_time"],
+        "create_time": toBeijingTime(row["create_time"]),
+        "update_time": toBeijingTime(row["update_time"]),
         "can_manage": currentUserId is not None and row["user_id"] == currentUserId,
         **getQuickPostStats(row["id"], currentUserId),
     }

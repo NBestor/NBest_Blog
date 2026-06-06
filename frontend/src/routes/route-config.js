@@ -21,8 +21,6 @@ export const routes = [
   },
   { path: '/user/login', label: '登录', title: '登录', description: '用户登录页面框架。', visibility: 'guest' },
   { path: '/user/register', label: '注册', title: '注册', description: '用户注册页面框架。', visibility: 'guest' },
-  { path: '/user/profile', label: '个人中心', title: '个人中心', description: '资料与内容聚合页面框架。', visibility: 'auth' },
-  { path: '/user/setting', label: '设置', title: '个人设置', description: '快写权限与账户设置页面框架。', visibility: 'auth' },
   { path: '/user/follow', label: '关注', title: '关注关系', description: '关注、粉丝与好友列表页面框架。', visibility: 'auth' },
   { path: '/photo', label: '照片墙', title: '照片墙', description: '照片资源展示与管理页面框架。', visibility: 'public' },
   { path: '/todo', label: '待办', title: '待办清单', description: 'TodoList 与到期提醒页面框架。', visibility: 'auth', showInNav: false },

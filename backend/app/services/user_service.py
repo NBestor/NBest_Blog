@@ -274,3 +274,44 @@ def updateUserSettings(userId: int, quickPostDefaultVisibleType: str) -> dict[st
         )
         connection.commit()
     return getUserSettings(userId)
+
+
+def getUserProfile(targetUserId: int, currentUserId: int | None) -> dict | None:
+    """Return target user's public profile including stats and visible content."""
+    from app.services.article_service import listVisibleArticles
+    from app.services.quick_post_service import listVisibleQuickPosts
+
+    userRow = getUserById(targetUserId)
+    if userRow is None:
+        return None
+
+    user = formatUser(userRow)
+
+    with getDatabaseConnection() as connection:
+        followingCount = connection.execute(
+            "SELECT COUNT(*) FROM follows WHERE user_id = ?",
+            (targetUserId,),
+        ).fetchone()[0]
+
+        followerCount = connection.execute(
+            "SELECT COUNT(*) FROM follows WHERE follow_user_id = ?",
+            (targetUserId,),
+        ).fetchone()[0]
+
+    allArticles = listVisibleArticles(currentUserId)
+    userArticles = [a for a in allArticles if a["user_id"] == targetUserId]
+
+    allQuickPosts = listVisibleQuickPosts(currentUserId)
+    userQuickPosts = [q for q in allQuickPosts if q["user_id"] == targetUserId]
+
+    return {
+        "user": user,
+        "stats": {
+            "following_count": followingCount,
+            "follower_count": followerCount,
+            "article_count": len(userArticles),
+            "quick_post_count": len(userQuickPosts),
+        },
+        "articles": userArticles,
+        "quick_posts": userQuickPosts,
+    }

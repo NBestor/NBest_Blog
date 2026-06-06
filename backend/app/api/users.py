@@ -5,13 +5,14 @@ from pydantic import BaseModel, Field
 from fastapi import APIRouter, Depends, File, HTTPException, UploadFile, status
 from PIL import Image, UnidentifiedImageError
 
-from app.api.auth import getCurrentUser
+from app.api.auth import getCurrentUser, getOptionalCurrentUser
 from app.core.config import getSettings
 from app.schemas.auth import UserResponse
 from app.schemas.follow import FollowListResponse
 from app.schemas.user import PasswordUpdateRequest, ProfileUpdateRequest
 from app.services.photo_service import createPhotoRecord
 from app.services.user_service import (
+    getUserProfile,
     getUserSettings,
     listUsersWithRelation,
     updateUserAvatar,
@@ -100,6 +101,19 @@ def resetAvatar(currentUser: dict[str, str | int | None] = Depends(getCurrentUse
 
     user = updateUserAvatar(userId, None)
     return UserResponse(**user)
+
+
+@router.get("/{id}/profile")
+def getUserPublicProfile(
+    id: int,
+    currentUser: dict[str, str | int | None] | None = Depends(getOptionalCurrentUser),
+):
+    currentUserId = int(currentUser["id"]) if currentUser else None
+    profile = getUserProfile(id, currentUserId)
+    if profile is None:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="User not found")
+
+    return profile
 
 
 @router.put("/me/password")

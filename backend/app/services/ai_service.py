@@ -110,8 +110,8 @@ def polishContent(content: str, api_key: str, base_url: str, model: str,
     else:
         systemPrompt = POLISH_PROMPTS.get(style, POLISH_PROMPTS["formatting"])
 
-    polished = _callAI(api_key, base_url, model, systemPrompt, content[:CONTENT_MAX_CHARS],
-                       maxTokens=4096, temperature=0.3, timeout=60)
+    polished = _callAI(api_key, base_url, model, systemPrompt, content[:8000],
+                       maxTokens=2000, temperature=0.3, timeout=120)
     return {
         "polished": polished,
         "model": model,

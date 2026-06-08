@@ -156,3 +156,42 @@ def chatWithNiubao(messages: list[dict], api_key: str, base_url: str, model: str
         elapsed = time.time() - start
         logger.error(f"Niubao chat failed: elapsed={elapsed:.2f}s, error={e}")
         raise
+
+
+NIUBAO_REPLY_PROMPT = (
+    "你是牛宝，一个温暖、幽默的好朋友。"
+    "有人回复了你的评论，请根据上下文，自然地回复他/她。"
+    "语气要短小精悍、有趣，像朋友之间聊天一样。"
+    "可以适当使用 emoji，但不强制。"
+    "控制在 200 字符以内。"
+)
+
+
+def generateReply(targetContent: str, parentComment: str, replyContent: str,
+                  api_key: str, base_url: str, model: str) -> str | None:
+    """Generate a contextual reply from Niubao when someone replies to his comment.
+
+    Returns the reply text or None on failure.
+    """
+    if not api_key:
+        logger.warning("Niubao auto-reply skipped: AI_API_KEY not configured")
+        return None
+
+    context = (
+        f"背景信息：\n{targetContent[:2000]}\n\n"
+        f"你的评论：{parentComment}\n\n"
+        f"对方回复：{replyContent}\n\n"
+        "请以牛宝的身份，回复对方。"
+    )
+
+    try:
+        start = time.time()
+        reply = _callAI(api_key, base_url, model, NIUBAO_REPLY_PROMPT,
+                        context, maxTokens=200, temperature=0.85, timeout=30)
+        elapsed = time.time() - start
+        logger.info(f"Niubao auto-reply success: elapsed={elapsed:.2f}s, replyLen={len(reply)}")
+        return reply
+    except Exception as e:
+        elapsed = time.time() - start
+        logger.error(f"Niubao auto-reply failed: elapsed={elapsed:.2f}s, error={e}")
+        return None

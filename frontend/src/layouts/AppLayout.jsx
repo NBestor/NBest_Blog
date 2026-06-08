@@ -55,7 +55,7 @@ function AppLayout() {
       <header className="navbar">
         <nav>
           <div className="navbar-branding">
-            <NavLink to="/">私人博客</NavLink>
+            <NavLink to="/">NBest的小天地</NavLink>
           </div>
           <div className="navbar-left">
             {primaryNavRoutes.map((route) => (

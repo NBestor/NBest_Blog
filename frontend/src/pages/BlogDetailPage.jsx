@@ -1,6 +1,6 @@
 import gfm from '@bytemd/plugin-gfm';
 import highlightSsr from '@bytemd/plugin-highlight-ssr';
-import math from '@bytemd/plugin-math';
+import mathSsr from '@bytemd/plugin-math-ssr';
 import { Viewer } from '@bytemd/react';
 import { memo, useEffect, useState } from 'react';
 import { Link, useNavigate, useParams } from 'react-router-dom';
@@ -20,11 +20,16 @@ const visibleTypeLabels = {
   self: '仅自己可见',
 };
 
-const viewerPlugins = [gfm(), math({ katexOptions: { strict: false } }), highlightSsr()];
+const viewerPlugins = [gfm(), mathSsr(), highlightSsr()];
 
 const ArticleBody = memo(function ArticleBody({ content }) {
   return <Viewer plugins={viewerPlugins} value={content} />;
 });
+
+function cleanContent(text) {
+  if (!text) return text;
+  return text.replace(/[\u200b\u200c\u200d\u2060\ufeff\u00a0]/g, '');
+}
 
 function BlogDetailPage() {
   const { id } = useParams();
@@ -55,7 +60,7 @@ function BlogDetailPage() {
         if (isMounted) {
           const data = articleResponse.data;
           setArticle(data);
-          setContent(data.content);
+          setContent(cleanContent(data.content));
           setComments(commentsResponse.data.items);
         }
       } catch {

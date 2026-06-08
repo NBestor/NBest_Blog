@@ -1,0 +1,18 @@
+2026-06-06 23:06:33,148 [INFO] app: Logging system initialized
+2026-06-06 23:12:47,457 [INFO] app.services.ai: Niubao chat start: messages=1
+2026-06-06 23:12:49,905 [INFO] app.services.ai: Niubao chat success: elapsed=2.45s, replyLen=50
+2026-06-06 23:17:17,201 [INFO] app: Logging system initialized
+2026-06-06 23:17:36,494 [INFO] app.services.ai: Niubao chat start: messages=1
+2026-06-06 23:17:39,886 [INFO] app.services.ai: Niubao chat success: elapsed=3.39s, replyLen=103
+2026-06-06 23:17:53,473 [INFO] app.services.ai: Niubao chat start: messages=3
+2026-06-06 23:17:56,550 [INFO] app.services.ai: Niubao chat success: elapsed=3.08s, replyLen=130
+2026-06-06 23:23:35,418 [INFO] app: Logging system initialized
+2026-06-06 23:30:41,177 [INFO] app: Logging system initialized
+2026-06-06 23:31:08,393 [INFO] app.services.ai: Niubao chat start: messages=5
+2026-06-06 23:31:12,167 [INFO] app.services.ai: Niubao chat success: elapsed=3.77s, replyLen=176
+2026-06-06 23:31:28,888 [INFO] app.services.ai: Niubao chat start: messages=7
+2026-06-06 23:31:32,022 [INFO] app.services.ai: Niubao chat success: elapsed=3.13s, replyLen=162
+2026-06-06 23:31:51,254 [INFO] app.services.ai: Niubao chat start: messages=9
+2026-06-06 23:31:54,754 [INFO] app.services.ai: Niubao chat success: elapsed=3.50s, replyLen=198
+2026-06-07 10:48:25,643 [INFO] app: Logging system initialized
+2026-06-07 10:58:00,755 [INFO] app: Logging system initialized

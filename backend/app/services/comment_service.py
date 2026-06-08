@@ -1,8 +1,15 @@
+import logging
+import threading
 from sqlite3 import Row
 
+from app.core.config import getSettings
 from app.core.timezone import toBeijingTime
 from app.db.database import getDatabaseConnection
 from app.services.interaction_service import getCommentStats
+
+logger = logging.getLogger("app.services.comment")
+
+NIUBAO_USER_ID = 666
 
 
 def formatComment(row: Row, currentUserId: int | None = None) -> dict[str, str | int | bool | None | list]:
@@ -83,6 +90,7 @@ def createTargetComment(
             (userId, articleId, parentId, targetType, targetId, content),
         )
         connection.commit()
+        newCommentId = cursor.lastrowid
         row = connection.execute(
             """
             SELECT comments.*, users.nickname AS author_nickname
@@ -90,10 +98,89 @@ def createTargetComment(
             JOIN users ON users.id = comments.user_id
             WHERE comments.id = ?
             """,
-            (cursor.lastrowid,),
+            (newCommentId,),
         ).fetchone()
 
+    # Trigger Niubao auto-reply in background if replying to Niubao's comment
+    if parentId is not None and userId != NIUBAO_USER_ID:
+        threading.Thread(
+            target=_maybeAutoReply,
+            args=(userId, targetType, targetId, parentId, newCommentId, content),
+            daemon=True,
+        ).start()
+
     return formatComment(row, userId)
+
+
+def _maybeAutoReply(
+    userId: int,
+    targetType: str,
+    targetId: int,
+    parentId: int,
+    newCommentId: int,
+    replyContent: str,
+) -> None:
+    """Check if parent comment is from Niubao and auto-reply in a background thread."""
+    try:
+        with getDatabaseConnection() as connection:
+            parentCommentRow = connection.execute(
+                "SELECT user_id, content FROM comments WHERE id = ?",
+                (parentId,),
+            ).fetchone()
+
+        if parentCommentRow is None or parentCommentRow["user_id"] != NIUBAO_USER_ID:
+            return
+
+        parentComment = parentCommentRow["content"]
+
+        # Get target content
+        with getDatabaseConnection() as connection:
+            if targetType == "article":
+                targetRow = connection.execute(
+                    "SELECT content FROM articles WHERE id = ?",
+                    (targetId,),
+                ).fetchone()
+            else:
+                targetRow = connection.execute(
+                    "SELECT content FROM quick_posts WHERE id = ?",
+                    (targetId,),
+                ).fetchone()
+
+        targetContent = targetRow["content"] if targetRow else ""
+        if not targetContent:
+            targetContent = f"（{targetType}: {targetId}）"
+
+        settings = getSettings()
+        from app.services.ai_service import generateReply
+
+        reply = generateReply(
+            targetContent=targetContent,
+            parentComment=parentComment,
+            replyContent=replyContent,
+            api_key=settings.ai_api_key,
+            base_url=settings.ai_base_url,
+            model=settings.ai_model,
+        )
+
+        if reply is None:
+            return
+
+        createTargetComment(
+            NIUBAO_USER_ID,
+            targetType,
+            targetId,
+            reply,
+            articleId=None if targetType != "article" else targetId,
+            parentId=newCommentId,
+        )
+
+        logger.info(
+            f"Niubao auto-reply created: parentId={newCommentId}, "
+            f"targetType={targetType}, targetId={targetId}"
+        )
+
+    except Exception as e:
+        logger.error(f"Niubao auto-reply background task failed: {e}")
 
 
 def listComments(articleId: int, currentUserId: int | None = None) -> list[dict]:

@@ -3,7 +3,7 @@ import { useEffect, useState } from 'react';
 import httpClient from '../api/http-client';
 
 function ApiStatus() {
-  const [status, setStatus] = useState('检测中');
+  const [status, setStatus] = useState(null);
 
   useEffect(() => {
     let isMounted = true;
@@ -12,7 +12,11 @@ function ApiStatus() {
       try {
         const response = await httpClient.get('/health');
         if (isMounted) {
-          setStatus(response.data.databaseConnected ? '后端与数据库已连接' : '数据库未连接');
+          if (!response.data.databaseConnected) {
+            setStatus('数据库未连接');
+          } else {
+            setStatus(null);
+          }
         }
       } catch {
         if (isMounted) {
@@ -28,6 +32,7 @@ function ApiStatus() {
     };
   }, []);
 
+  if (!status) return null;
   return <span className="api-status">{status}</span>;
 }
 

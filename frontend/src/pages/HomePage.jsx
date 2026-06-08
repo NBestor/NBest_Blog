@@ -300,7 +300,7 @@ function HomePage() {
 
   async function handleTodoToggle(todo) {
     try {
-      await httpClient.put(`/todos/${todo.id}`, { is_done: true });
+      await httpClient.patch(`/todos/${todo.id}/status`, { is_done: !todo.is_done });
       await loadHome();
     } catch {
       setTodoMessage('待办操作失败');
@@ -343,7 +343,7 @@ function HomePage() {
                 <div className="home-mini-item home-todo-row" key={todo.id}>
                   <input
                     type="checkbox"
-                    checked={false}
+                    checked={todo.is_done}
                     onChange={() => handleTodoToggle(todo)}
                     onClick={(e) => e.stopPropagation()}
                   />

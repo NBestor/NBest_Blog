@@ -599,6 +599,9 @@ function BlogEditPage() {
           >
             🤖 AI 润色
           </button>
+          {formData.content.length > 8000 && (
+            <span className="ai-hint">⚠️ 文章较长，仅润色前8000字符</span>
+          )}
           <label className="todo-check">
             <input
               type="checkbox"

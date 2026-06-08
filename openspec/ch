@@ -1,36 +1,31 @@
-## ADDED Requirements
+## Why
 
-### Requirement: Backend Logging Configuration
-后端 SHALL 使用 Python `logging` 模块配置统一日志系统，输出到文件和控制台。
+当前牛宝评论功能需要用户手动触发（在文章编辑页或主页点击"🤖 牛宝评论"按钮），生成单条评论后即结束。用户无法与牛宝进行多轮对话式互动——当有人回复牛宝的评论时，牛宝没有任何回应，显得不够"智能"和"温暖"。
 
-#### Scenario: 日志配置文件输出
-- **WHEN** 后端启动时调用 `setupLogging()`
-- **THEN** 日志文件写入 `logs/app.log`
-- **AND** 日志格式包含时间戳、日志级别、模块名、消息内容
-- **AND** 文件大小超过 5MB 时自动轮转，保留最近 3 个文件
+需要让牛宝在被回复时自动再回复，形成真正的对话互动体验，增加趣味性和用户粘性。
 
-#### Scenario: 控制台日志级别过滤
-- **WHEN** 后端运行中发生 WARNING 或 ERROR 级别事件
-- **THEN** 日志同时输出到控制台
-- **AND** INFO 和 DEBUG 级别日志仅写入文件，不输出到控制台
+## What Changes
 
-### Requirement: API Route Error Logging
-关键 API 路由 SHALL 在捕获异常时记录错误日志。
+- **后端**：在评论创建流程中（`createTargetComment`），检测新评论的父评论作者是否为牛宝（user_id=666）。如果是，异步调用 AI 生成一条上下文感知的回复评论。
+- **后端**：新增 `NIUBAO_REPLY_PROMPT` — 用于多轮对话式回复的 system prompt，让牛宝根据对话历史上下文生成自然、连贯的回复。
+- **后端**：新增 `generateReply()` 函数 — 接收对话上下文（原内容 + 被回复的评论 + 回复内容），生成牛宝的回复。
+- **防无限循环**：牛宝不会回复自己的自动回复（即不回复 author=666 的评论），也不会在 AI 调用失败时阻塞用户评论的正常创建流程。
 
-#### Scenario: API 异常记录
-- **WHEN** `articles.py`, `ai.py`, `users.py`, `quick_posts.py`, `comments.py` 中的路由捕获异常
-- **THEN** 使用模块级 logger 记录错误信息
-- **AND** 日志包含请求方法、路径、用户 ID（如已登录）、异常详情
+## Capabilities
 
-### Requirement: AI Service Call Logging
-AI 服务层 SHALL 记录每次 API 调用的详细信息。
+### New Capabilities
 
-#### Scenario: AI 调用成功日志
-- **WHEN** `_callAI()` 成功返回结果
-- **THEN** 记录调用开始（model, contentLen, maxTokens）
-- **AND** 记录调用成功（elapsed 秒数, responseLen）
+- `niubao-auto-reply`: 牛宝被回复时自动回复，形成对话互动闭环。
 
-#### Scenario: AI 调用失败日志
-- **WHEN** `_callAI()` 抛出异常
-- **THEN** 记录调用失败（elapsed 秒数, 异常信息）
-- **AND** 重新抛出异常（不吞掉错误）
+## Impact
+
+| 层级 | 文件 | 改动 |
+|------|------|------|
+| 后端 service | `ai_service.py` | 新增 `NIUBAO_REPLY_PROMPT` 和 `generateReply()` 函数 |
+| 后端 service | `comment_service.py` | 在 `createTargetComment()` 中检测父评论是牛宝时触发自动回复 |
+| 后端 API | 无需改动 | — |
+| 前端 | 无需改动 | 自动回复在前端正常显示，无感知 |
+
+- 不影响现有评论创建流程（用户正常回复评论的逻辑不变）
+- 不阻塞用户操作（AI 调用以异步方式执行，失败时静默降级）
+- 不开辟新的 HTTP 路由或前端组件

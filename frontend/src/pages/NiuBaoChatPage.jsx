@@ -107,14 +107,16 @@ function ChatPage() {
           </button>
           <div className="chat-conversations">
             {conversations.map((chat) => (
-              <button
+              <div
                 key={chat.id}
                 className={`chat-conv-item ${chat.id === activeChatId ? 'active' : ''}`}
                 onClick={() => setActiveChatId(chat.id)}
+                role="button"
+                tabIndex={0}
               >
                 <span>{chat.title}</span>
                 <button className="chat-conv-delete" onClick={(e) => handleDeleteChat(chat.id, e)}>✕</button>
-              </button>
+              </div>
             ))}
           </div>
         </aside>

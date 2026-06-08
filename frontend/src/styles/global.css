@@ -1588,17 +1588,17 @@ select:focus-visible {
 .nav-search {
   display: flex;
   align-items: center;
-  width: 38px;
-  overflow: hidden;
+  width: 220px;
+  height: 36px;
   background: #fff;
   border: 1px solid #ddd;
   border-radius: 999px;
-  transition: width 0.18s ease, border-color 0.18s ease;
+  transition: border-color 0.18s ease;
+  overflow: hidden;
 }
 
 .nav-search:focus-within,
 .nav-search:hover {
-  width: 230px;
   border-color: #b9c8ec;
 }
 
@@ -1620,7 +1620,7 @@ select:focus-visible {
 
 .nav-search input {
   min-width: 0;
-  width: 180px;
+  flex: 1;
   height: 36px;
   padding: 0 12px 0 2px;
   background: transparent;
@@ -2201,11 +2201,9 @@ select:focus-visible {
     width: 100%;
   }
 
-  .nav-search,
-  .nav-search:focus-within,
-  .nav-search:hover {
+  .nav-search {
     width: 100%;
-    max-width: 260px;
+    max-width: 220px;
   }
 
   .home-main-grid {
@@ -2584,7 +2582,9 @@ select:focus-visible {
 
 /* Chat page */
 .chat-page {
-  height: calc(100vh - 140px);
+  height: calc(100vh - 120px);
+  min-height: 0;
+  overflow: hidden;
 }
 .chat-layout {
   display: grid;
@@ -2642,9 +2642,11 @@ select:focus-visible {
   display: flex;
   flex-direction: column;
   height: 100%;
+  min-height: 0;
 }
 .chat-messages {
   flex: 1;
+  min-height: 0;
   overflow-y: auto;
   padding: 20px;
   display: flex;

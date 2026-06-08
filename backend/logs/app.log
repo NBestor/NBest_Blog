@@ -38,3 +38,4 @@
 2026-06-07 11:55:04,750 [INFO] app.services.comment: Niubao auto-reply created: parentId=21, targetType=article, targetId=16
 2026-06-07 12:04:44,221 [INFO] app: Logging system initialized
 2026-06-07 12:20:22,955 [INFO] app: Logging system initialized
+2026-06-08 13:40:34,974 [INFO] app: Logging system initialized

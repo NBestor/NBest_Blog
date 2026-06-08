@@ -1,30 +1,219 @@
-# Private Blog System
+# NBest 的小天地
 
-阶段 1：项目工程化初始化。
+一个功能丰富、温馨治愈的个人博客系统，集成 AI 辅助写作、牛宝 AI 小伙伴、待办清单、日历备忘录等功能。
 
-## Tech Stack
+## 技术栈
 
-- Frontend: React 18, React Router, Axios, ESLint, Prettier, Vite
-- Backend: FastAPI, SQLite, CORS, local static resources
+| 层级 | 技术 |
+|------|------|
+| 前端 | React 18、React Router、Axios、Vite、ByteMD（Markdown 编辑器） |
+| 后端 | FastAPI、SQLite、Uvicorn、Pydantic |
+| AI | OpenAI 兼容 API（DeepSeek、通义千问、ChatGPT 等任意兼容服务） |
 
-## Run Backend
+## 快速开始
+
+### 1. 克隆项目
+
+```bash
+git clone git@github.com:NBestor/NBest_Blog.git
+cd NBest_Blog
+```
+
+### 2. 启动后端
 
 ```bash
 cd backend
+
+# 创建虚拟环境（首次）
 python -m venv .venv
+
+# 激活虚拟环境
+# Windows:
 .venv\Scripts\activate
+# macOS / Linux:
+source .venv/bin/activate
+
+# 安装依赖
 pip install -r requirements.txt
+
+# 配置环境变量（复制示例文件并填入你的配置）
+copy .env.example .env
+# 编辑 .env 文件，填入 AI_API_KEY 等配置
+
+# 启动后端（开发模式，支持热重载）
 uvicorn app.main:app --reload
 ```
 
-Health check: `http://localhost:8000/api/health`
+后端运行在 `http://localhost:8000`，健康检查：`http://localhost:8000/api/health`
 
-## Run Frontend
+### 3. 启动前端
 
 ```bash
 cd frontend
+
+# 安装依赖
 npm install
+
+# 启动开发服务器
 npm run dev
 ```
 
-Frontend: `http://localhost:5173`
+前端运行在 `http://localhost:5173`
+
+### 4. 一键启动（Windows）
+
+项目根目录提供了 `一键启动.cmd`，双击即可同时启动前后端。
+
+---
+
+## 功能总览
+
+### 一、基础功能
+
+#### 📝 博客文章
+- **Markdown 编辑器** —— 支持分屏实时预览，所见即所得
+- **草稿箱** —— 云端保存草稿，随时继续写作
+- **文章分类** —— 自定义分类，方便整理
+- **标签系统** —— 多标签标记文章
+- **可见范围** —— 公开 / 好友可见 / 仅自己可见
+- **图片上传** —— 文章内嵌图片，自动插入 Markdown
+- **文章详情页** —— 完整阅读体验，支持代码高亮、数学公式
+
+#### ⚡ 快写
+- 类似微博的轻量动态发布
+- 支持可见范围设置
+- 首页动态流实时展示
+- 支持点赞和评论
+
+#### ✅ 待办清单
+- 添加待办事项，支持分类和截止日期
+- 勾选完成 / 取消完成
+- 到期提醒弹窗
+- 首页侧边栏快捷操作
+
+#### 📅 日历备忘录
+- 记录生日、纪念日和年度重复事件
+- 月视图日历展示
+- 首页日历小组件
+- 即将到来事件提醒
+
+#### 🖼️ 照片墙
+- 上传和管理照片
+- 按可见范围分类（公开 / 好友 / 仅自己）
+- 大图预览模式
+- 简洁的卡片式布局
+
+#### 👤 用户系统
+- 注册 / 登录 / 退出
+- 个人主页 —— 展示头像、签名、统计数据
+- 头像上传和编辑
+- 个人信息和密码修改
+- 默认可见范围设置
+
+#### 🔗 关注系统
+- 关注 / 取消关注其他用户
+- 好友（互相关注）列表
+- 粉丝列表
+
+#### 💬 评论系统
+- 文章和快写统一评论
+- 支持嵌套回复（楼中楼）
+- 评论点赞
+
+#### ❤️ 互动功能
+- 文章点赞和收藏
+- 快写点赞
+- 统一互动统计
+
+#### 🔍 搜索
+- 导航栏搜索框，支持搜索文章标题和快写内容
+- 搜索结果分栏展示
+
+#### 📓 快记
+- 私密笔记，仅自己可见
+- 支持全文搜索
+
+#### 🛡️ 管理员系统（admin 角色）
+- 内容治理 —— 删除违规文章、快写、评论、照片
+- 用户管理 —— 删除用户、强制重命名、清除头像
+- 管理员任命与撤销（主管专属）
+- 系统概览面板
+
+---
+
+### 二、AI 辅助功能
+
+> **前置条件**：需在 `backend/.env` 中配置 `AI_API_KEY`、`AI_BASE_URL`、`AI_MODEL`，支持任意 OpenAI 兼容 API。
+
+#### 🤖 AI 生成文章简介
+在文章编辑器中点击「AI 生成」，可选择多种风格自动生成文章摘要：
+- 📋 正式公告
+- 📢 营销吸睛
+- 🎓 学术简洁
+- 💬 轻松娱乐
+- 🤪 幽默搞笑
+- ✏️ 自定义提示词
+
+#### ✨ AI 润色文章
+点击「AI 润色」按钮，选择润色模式：
+- 📐 仅优化排版 —— 调整格式，不改文字
+- 🔍 改错别字 / 重复 —— 修正文字错误
+- 🎓 学术规范 —— 学术化改写
+- 🌸 青春文学 —— 文艺清新风格
+- ✏️ 自定义提示词
+
+润色结果可预览、复制或一键覆盖原文。**注意：文章较长时仅润色前 8000 字符。**
+
+#### 🐮 牛宝 AI 评论
+发布文章或快写时勾选「牛宝评论」，牛宝会自动以温暖幽默的语气发表评论。也可以对其他内容手动生成牛宝评论。
+
+#### 🐮 牛宝 AI 聊天
+- 专属聊天页面（`/niubao`）
+- 多轮对话，支持 Markdown 渲染
+- 历史对话管理（新建 / 删除 / 切换）
+- 左下角固定电子宠物入口
+
+#### 🐮 牛宝自动回复
+当有用户回复牛宝的评论时，牛宝会自动在后台生成一条上下文感知的回复，实现真正的对话互动体验。AI 调用以异步方式执行，不会阻塞用户操作。
+
+---
+
+## 项目结构
+
+```
+├── backend/                 # FastAPI 后端
+│   ├── app/
+│   │   ├── api/            # HTTP 路由层
+│   │   ├── services/       # 业务逻辑层
+│   │   ├── core/           # 配置与安全
+│   │   ├── db/             # 数据库连接与初始化
+│   │   └── schemas/        # Pydantic 数据模型
+│   ├── data/               # SQLite 数据库文件
+│   ├── static/             # 静态资源（上传图片等）
+│   ├── requirements.txt    # Python 依赖
+│   └── .env.example        # 环境变量示例
+├── frontend/               # React 前端
+│   ├── src/
+│   │   ├── pages/          # 页面组件
+│   │   ├── components/     # 可复用组件
+│   │   ├── layouts/        # 布局组件
+│   │   ├── contexts/       # React Context
+│   │   ├── api/            # Axios HTTP 客户端
+│   │   ├── routes/         # 路由配置
+│   │   └── styles/         # 全局样式
+│   └── package.json        # Node 依赖
+├── scripts/                # 工具脚本
+│   └── clean_db.py         # 数据库零宽字符清理
+└── 一键启动.cmd             # Windows 一键启动脚本
+```
+
+## 默认账号
+
+| 角色 | 用户名 | 密码 |
+|------|--------|------|
+| 主管（admin） | NBest | NBest666 |
+| 牛宝 AI Bot | niubao | —（系统内置） |
+
+## License
+
+MIT

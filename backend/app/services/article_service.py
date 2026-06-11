@@ -1,4 +1,5 @@
 import re
+from sqlite3 import Row
 
 from app.core.timezone import toBeijingTime
 from app.db.database import getDatabaseConnection

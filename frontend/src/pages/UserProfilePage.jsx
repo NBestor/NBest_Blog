@@ -196,7 +196,7 @@ function UserProfilePage() {
   const avatarUrl = user.avatar_url
     ? user.avatar_url.startsWith('http')
       ? user.avatar_url
-      : `http://127.0.0.1:8000${user.avatar_url}`
+      : `${user.avatar_url}`
     : '';
 
   return (

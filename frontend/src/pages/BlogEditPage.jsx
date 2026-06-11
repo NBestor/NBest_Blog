@@ -383,7 +383,7 @@ function BlogEditPage() {
       const response = await httpClient.post('/articles/images', imageFormData, {
         headers: { 'Content-Type': 'multipart/form-data' },
       });
-      const imageMarkdown = `\n\n![图片](http://127.0.0.1:8000${response.data.url})`;
+      const imageMarkdown = `\n\n![图片](${response.data.url})`;
       setFormData((currentData) => ({
         ...currentData,
         content: `${currentData.content}${imageMarkdown}`,

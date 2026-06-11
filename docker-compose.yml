@@ -1,0 +1,45 @@
+# ====================
+# Docker Compose 编排
+# 一键启动前后端服务
+# ====================
+
+services:
+  # ---------- 后端 ----------
+  backend:
+    build:
+      context: .
+      dockerfile: deploy/Dockerfile.backend
+    container_name: blog-backend
+    restart: always
+    volumes:
+      # 持久化 SQLite 数据库文件
+      - backend_data:/app/data
+      # 持久化上传的文件（图片等）
+      - backend_uploads:/app/static/uploads
+    env_file:
+      - backend/.env
+    networks:
+      - blog_network
+
+  # ---------- 前端 ----------
+  frontend:
+    build:
+      context: .
+      dockerfile: deploy/Dockerfile.frontend
+    container_name: blog-frontend
+    restart: always
+    ports:
+      # 映射到宿主机 80 端口
+      - "80:80"
+    depends_on:
+      - backend
+    networks:
+      - blog_network
+
+volumes:
+  backend_data:   # SQLite 数据库持久化
+  backend_uploads: # 上传文件持久化
+
+networks:
+  blog_network:
+    driver: bridge

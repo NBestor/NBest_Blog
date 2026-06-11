@@ -5,3 +5,6 @@ __pycache__/
 .venv/
 .env
 backend/data/*.db
+backend/logs/
+*.tar.gz
+*.log
